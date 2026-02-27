@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Time Brasil Intelligence — COB Analytics Platform</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<style>* { margin: 0; padding: 0; box-sizing: border-box; } body { background: #060b14; }</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+const App = () => {
+  const [sec, setSec] = useState("overview");
+  const [loaded, setLoaded] = useState(false);
+  const [hov, setHov] = useState(null);
+  const [selConf, setSelConf] = useState(null);
+  const [cTab, setCTab] = useState("radar");
+  useEffect(() => { setTimeout(() => setLoaded(true), 100); }, []);
+  const fn = "'Outfit','Segoe UI',sans-serif", mn = "'DM Mono',monospace";
+  const cd = { background: "linear-gradient(135deg,#0d1b2a,#152238)", borderRadius: 16, padding: 24, border: "1px solid #1e3a5f30" };
+  const ic = { background: "#0a1628", borderRadius: 12, padding: 16, border: "1px solid #1e3a5f20" };
+  const secs = [{id:"overview",l:"Visão Geral",i:"◉"},{id:"athletes",l:"Atletas 360",i:"⬡"},{id:"confederations",l:"Confederações",i:"◈"},{id:"competition",l:"Competição",i:"◇"},{id:"health",l:"Saúde & Carga",i:"♡"},{id:"strategy",l:"Estratégico",i:"◆"},{id:"public",l:"Portal Público",i:"◎"}];
+  const aths = [
+    {n:"Rebeca Andrade",s:"Ginástica",st:"green",r:1,p:97,ph:"RA",t:"ind"},
+    {n:"Rayssa Leal",s:"Skate",st:"green",r:1,p:96,ph:"RL",t:"ind"},
+    {n:"Caio Bonfim",s:"Marcha",st:"green",r:1,p:95,ph:"CB",t:"ind"},
+    {n:"Gabriel Medina",s:"Surf",st:"green",r:2,p:90,ph:"GM",t:"ind"},
+    {n:"Bia Souza",s:"Judô +78kg",st:"yellow",r:3,p:88,ph:"BS",t:"ind"},
+    {n:"Isaquias Queiroz",s:"Canoagem",st:"green",r:4,p:85,ph:"IQ",t:"ind"},
+  ];
+  const confs = [
+    {id:"cbb",nm:"CBB",sp:"Basquete",st:"active",tp:"col",at:24,mods:["radar","report","chemistry","health"],cl:"#F97316"},
+    {id:"cbv",nm:"CBV",sp:"Vôlei",st:"active",tp:"col",at:28,mods:["radar","report","chemistry","health"],cl:"#3B82F6"},
+    {id:"cbj",nm:"CBJ",sp:"Judô",st:"active",tp:"ind",at:28,mods:["radar","report","context","health"],cl:"#EF4444"},
+    {id:"cbat",nm:"CBAt",sp:"Atletismo",st:"active",tp:"ind",at:62,mods:["radar","report","context","health"],cl:"#FFB020"},
+    {id:"cbg",nm:"CBG",sp:"Ginástica",st:"active",tp:"ind",at:14,mods:["radar","report","context","health"],cl:"#EC4899"},
+    {id:"cbsurf",nm:"CBSurf",sp:"Surf",st:"pending",tp:"ind",at:8,mods:["radar","health"],cl:"#10B981"},
+    {id:"cbsk",nm:"CBSk",sp:"Skate",st:"active",tp:"ind",at:10,mods:["radar","report","context","health"],cl:"#F43F5E"},
+    {id:"cbhb",nm:"CBHB",sp:"Handebol",st:"pending",tp:"col",at:22,mods:["radar","health"],cl:"#8B5CF6"},
+    {id:"cbda",nm:"CBDA",sp:"Natação",st:"active",tp:"ind",at:35,mods:["radar","report","context","health"],cl:"#06B6D4"},
+    {id:"cbvela",nm:"CBVela",sp:"Vela",st:"pending",tp:"ind",at:18,mods:["radar"],cl:"#6366F1"},
+    {id:"cbc",nm:"CBC",sp:"Canoagem",st:"pending",tp:"ind",at:16,mods:["radar"],cl:"#F59E0B"},
+    {id:"cbboxe",nm:"CBBoxe",sp:"Boxe",st:"inactive",tp:"ind",at:12,mods:[],cl:"#EF4444"},
+  ];
+  const Dot = ({s}) => <span style={{width:10,height:10,borderRadius:"50%",display:"inline-block",background:s==="green"?"#22C55E":s==="yellow"?"#FBBF24":"#EF4444",boxShadow:`0 0 8px ${s==="green"?"#22C55E":s==="yellow"?"#FBBF24":"#EF4444"}60`}}/>;
+  const Bar = ({v,c="#009C3B",w=120}) => <div style={{width:w,height:6,background:"#1a2332",borderRadius:3,overflow:"hidden"}}><div style={{width:`${v}%`,height:"100%",background:`linear-gradient(90deg,${c},${c}CC)`,borderRadius:3,transition:"width 1s ease"}}/></div>;
+  const Ring = ({v,sz=48,c="#009C3B"}) => {const r=(sz-6)/2,ci=2*Math.PI*r,o=ci-(v/100)*ci;return <svg width={sz} height={sz} style={{transform:"rotate(-90deg)"}}><circle cx={sz/2} cy={sz/2} r={r} fill="none" stroke="#1a2332" strokeWidth={4}/><circle cx={sz/2} cy={sz/2} r={r} fill="none" stroke={c} strokeWidth={4} strokeDasharray={ci} strokeDashoffset={o} strokeLinecap="round" style={{transition:"stroke-dashoffset 1.2s ease"}}/><text x={sz/2} y={sz/2} textAnchor="middle" dominantBaseline="central" style={{transform:"rotate(90deg)",transformOrigin:"center",fontSize:sz*.28,fill:"#fff",fontWeight:700}}>{v}</text></svg>};
+  const Badge = ({n,a}) => <span style={{fontSize:9,padding:"2px 7px",borderRadius:10,fontWeight:600,background:a?"#009C3B20":"#1e3a5f20",color:a?"#009C3B":"#445566",textTransform:"uppercase"}}>{n}</span>;
+  const renderOverview = () => (
+    <div style={{display:"flex",flexDirection:"column",gap:24}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
+        {[{l:"Atletas Monitorados",v:"583",s:"47 modalidades",a:"#009C3B"},{l:"Confederações Integradas",v:"9/33",s:"7 ativas, 2 onboarding",a:"#3B82F6"},{l:"Vagas LA 2028",v:"127",s:"de 240 possíveis",a:"#FFDF00"},{l:"Projeção Medalhas",v:"22",s:"8🥇 7🥈 7🥉",a:"#EC4899"}].map((k,i)=>(
+          <div key={i} style={{...cd,position:"relative",overflow:"hidden",cursor:"pointer",transform:loaded?"translateY(0)":"translateY(20px)",opacity:loaded?1:0,transition:`all .6s ease ${i*.1}s`}}>
+            <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${k.a},transparent)`,borderRadius:"16px 16px 0 0"}}/>
+            <div style={{fontSize:11,color:"#8899aa",textTransform:"uppercase",letterSpacing:1.5,marginBottom:8,fontFamily:mn}}>{k.l}</div>
+            <div style={{fontSize:32,fontWeight:800,color:"#fff",fontFamily:fn}}>{k.v}</div>
+            <div style={{fontSize:13,color:k.a,marginTop:6,fontWeight:500}}>{k.s}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+        <div style={cd}>
+          <h3 style={{color:"#fff",fontSize:15,fontWeight:700,margin:"0 0 16px",fontFamily:fn}}>Destaques — Atletas Elite</h3>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+            {aths.map((a,i)=>(
+              <div key={i} style={{...ic,cursor:"pointer",transition:"all .3s",borderColor:hov===`a${i}`?"#009C3B40":"#1e3a5f20"}} onMouseEnter={()=>setHov(`a${i}`)} onMouseLeave={()=>setHov(null)}>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <div style={{width:36,height:36,borderRadius:8,background:"linear-gradient(135deg,#009C3B,#FFDF00)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,color:"#0d1b2a"}}>{a.ph}</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:12,fontWeight:700,color:"#fff",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{a.n}</div>
+                    <div style={{fontSize:10,color:"#667788"}}>{a.s}</div>
+                  </div>
+                  <Dot s={a.st}/>
+                </div>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:8}}>
+                  <span style={{fontSize:10,color:"#8899aa"}}>#{a.r}</span>
+                  <Bar v={a.p} w={70}/><span style={{fontSize:10,color:"#009C3B",fontWeight:600}}>{a.p}%</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={cd}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+            <h3 style={{color:"#fff",fontSize:15,fontWeight:700,margin:0,fontFamily:fn}}>Arquitetura da Plataforma</h3>
+            <span style={{fontSize:10,color:"#009C3B",background:"#009C3B15",padding:"3px 10px",borderRadius:20,fontWeight:600}}>LIVE</span>
+          </div>
+          <div style={{...ic,textAlign:"center",marginBottom:10}}>
+            <div style={{fontSize:13,fontWeight:700,color:"#009C3B",marginBottom:4}}>CAMADA 1 — COB</div>
+            <div style={{fontSize:10,color:"#8899aa"}}>Dashboard Estratégico • Medal Projection • ROI • Talent Pipeline</div>
+          </div>
+          <div style={{fontSize:14,textAlign:"center",color:"#009C3B40",margin:"4px 0"}}>▼ ▼ ▼</div>
+          <div style={{...ic,textAlign:"center",marginBottom:10}}>
+            <div style={{fontSize:13,fontWeight:700,color:"#3B82F6",marginBottom:4}}>CAMADA 2 — CONFEDERAÇÕES</div>
+            <div style={{fontSize:10,color:"#8899aa"}}>Radar • Report Generator • Chemistry/Context • Health</div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:10}}>
+            <div style={{...ic,textAlign:"center",borderColor:"#F9731640"}}>
+              <div style={{fontSize:11,fontWeight:700,color:"#F97316"}}>Coletivos</div>
+              <div style={{fontSize:9,color:"#667788",marginTop:2}}>Chemistry Analyzer • Lineups • JOI/JDI</div>
+            </div>
+            <div style={{...ic,textAlign:"center",borderColor:"#EC489940"}}>
+              <div style={{fontSize:11,fontWeight:700,color:"#EC4899"}}>Individuais</div>
+              <div style={{fontSize:9,color:"#667788",marginTop:2}}>Context Analyzer • Rivalry • Peak Model</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style={cd}>
+        <h3 style={{color:"#fff",fontSize:15,fontWeight:700,margin:"0 0 16px",fontFamily:fn}}>Status de Integração — Confederações</h3>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:8}}>
+          {confs.map((c,i)=>(
+            <div key={i} onClick={()=>{setSelConf(c);setSec("confederations");setCTab("radar");}} style={{...ic,textAlign:"center",cursor:"pointer",opacity:c.st==="inactive"?.4:1,borderColor:c.st==="active"?"#22C55E20":c.st==="pending"?"#FBBF2420":"#1e3a5f15",transition:"all .2s"}}>
+              <div style={{width:32,height:32,borderRadius:8,margin:"0 auto 6px",background:`${c.cl}20`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:c.cl}}>{c.nm.substring(0,3)}</div>
+              <div style={{fontSize:11,color:"#ccd6e0",fontWeight:600}}>{c.nm}</div>
+              <div style={{fontSize:9,color:"#556677"}}>{c.sp}</div>
+              <div style={{fontSize:8,marginTop:4,fontWeight:700,padding:"2px 6px",borderRadius:10,display:"inline-block",color:c.st==="active"?"#22C55E":c.st==="pending"?"#FBBF24":"#556677",background:c.st==="active"?"#22C55E15":c.st==="pending"?"#FBBF2415":"#1e3a5f15"}}>{c.st==="active"?"INTEGRADA":c.st==="pending"?"PENDENTE":"NÃO INICIADA"}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+  const renderConf = () => {
+    const cf = selConf || confs[0];
+    const isC = cf.tp==="col";
+    const tabs = isC?[{id:"radar",l:"Radar"},{id:"report",l:"Report"},{id:"chemistry",l:"Chemistry"},{id:"health",l:"Health"}]:[{id:"radar",l:"Radar"},{id:"report",l:"Report"},{id:"context",l:"Context"},{id:"health",l:"Health"}];
+    return (
+      <div style={{display:"flex",flexDirection:"column",gap:20}}>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          {confs.filter(c=>c.st!=="inactive").map(c=>(
+            <button key={c.id} onClick={()=>{setSelConf(c);setCTab("radar");}} style={{background:cf.id===c.id?c.cl:"#0d1b2a",border:`1px solid ${cf.id===c.id?c.cl:"#1e3a5f30"}`,borderRadius:10,padding:"8px 14px",color:cf.id===c.id?"#fff":"#8899aa",fontSize:12,fontWeight:600,cursor:"pointer"}}>{c.nm} <span style={{fontSize:9,opacity:.7}}>({c.sp})</span></button>
+          ))}
+        </div>
+        <div style={cd}>
+          <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:20}}>
+            <div style={{width:56,height:56,borderRadius:14,background:`${cf.cl}25`,border:`2px solid ${cf.cl}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:800,color:cf.cl}}>{cf.nm.substring(0,3)}</div>
+            <div>
+              <div style={{fontSize:20,fontWeight:800,color:"#fff",fontFamily:fn}}>{cf.nm} <span style={{color:"#667788",fontWeight:400}}>Analytics</span></div>
+              <div style={{fontSize:13,color:"#8899aa"}}>{cf.sp} • {cf.at} atletas • <span style={{color:isC?"#F97316":"#EC4899",fontWeight:600}}>{isC?"Coletivo":"Individual"}</span></div>
+            </div>
+            <div style={{marginLeft:"auto",display:"flex",gap:6}}>{cf.mods.map(m=><Badge key={m} n={m} a={true}/>)}</div>
+          </div>
+          <div style={{display:"flex",gap:0,borderBottom:"1px solid #1e3a5f30",marginBottom:20}}>
+            {tabs.map(t=>(
+              <div key={t.id} onClick={()=>setCTab(t.id)} style={{padding:"10px 20px",fontSize:13,fontWeight:cTab===t.id?700:500,color:cTab===t.id?"#009C3B":"#667788",cursor:"pointer",borderBottom:cTab===t.id?"2px solid #009C3B":"2px solid transparent"}}>{t.l}</div>
+            ))}
+          </div>
+          {cTab==="radar"&&<div>
+            <h4 style={{color:"#fff",fontSize:14,fontWeight:700,margin:"0 0 12px"}}>Radar — Brasileiros no Exterior ({cf.sp})</h4>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
+              {(isC?[{n:"Gui Santos",l:"NBA — Warriors",s:"8.2 PPG",t:"+12%"},{n:"Raulzinho",l:"EuroLeague — Baskonia",s:"12.4 PPG",t:"+5%"},{n:"Yago",l:"ACB — Tenerife",s:"14.1 PPG",t:"+8%"}]:[{n:"Atleta 1",l:"Circuito Internacional",s:"Rank #3",t:"+15%"},{n:"Atleta 2",l:"Grand Slam / World Cup",s:"Rank #5",t:"+8%"},{n:"Atleta 3",l:"Grand Prix / Tour",s:"Rank #8",t:"+3%"}]).map((p,i)=>(
+                <div key={i} style={ic}>
+                  <div style={{fontSize:13,fontWeight:700,color:"#fff"}}>{p.n}</div>
+                  <div style={{fontSize:11,color:"#667788",margin:"4px 0"}}>{p.l}</div>
+                  <div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontSize:14,fontWeight:700,color:cf.cl}}>{p.s}</span><span style={{fontSize:11,color:"#22C55E"}}>{p.t}</span></div>
+                </div>
+              ))}
+            </div>
+          </div>}
+          {cTab==="report"&&<div>
+            <h4 style={{color:"#fff",fontSize:14,fontWeight:700,margin:"0 0 12px"}}>{isC?"BasketBrain":"SportBrain"} — Report Generator</h4>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+              <div style={ic}>
+                <div style={{fontSize:12,color:"#8899aa",marginBottom:8,fontWeight:600}}>{isC?"Métricas de Jogo":"Métricas de Competição"}</div>
+                {(isC?["OFFRTG • DEFRTG • NETRTG","TS% • EFG% • PACE","AST/TO • OREB% • TOV%","PIE • POSS • Shot Charts"]:["Splits por trecho/fase","Opponent Profile detalhado","Consistency Analysis","D-score • E-score • Wave Score"]).map((m,i)=>(<div key={i} style={{fontSize:12,color:"#ccd6e0",padding:"6px 0",borderBottom:i<3?"1px solid #1e3a5f15":"none"}}>{m}</div>))}
+              </div>
+              <div style={ic}>
+                <div style={{fontSize:12,color:"#8899aa",marginBottom:8,fontWeight:600}}>Relatório com IA</div>
+                {["Análise SWOT automatizada","Chaves para vitória/derrota",isC?"Scouting de adversários":"Opponent Profile","Recomendações táticas","Exportação em PDF"].map((r,i)=>(<div key={i} style={{fontSize:11,color:"#ccd6e0",display:"flex",alignItems:"center",gap:6}}><span style={{color:"#009C3B"}}>✓</span> {r}</div>))}
+              </div>
+            </div>
+          </div>}
+          {cTab==="chemistry"&&isC&&<div>
+            <h4 style={{color:"#fff",fontSize:14,fontWeight:700,margin:"0 0 12px"}}>Chemistry Analyzer — Sinergia entre Jogadores</h4>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+              <div style={ic}>
+                <div style={{fontSize:12,color:"#8899aa",marginBottom:10,fontWeight:600}}>Melhores Duplas (JOI/JDI)</div>
+                {[{p:"Gui Santos + Raulzinho",j:"+8.4",d:"+5.2"},{p:"Yago + Didi",j:"+6.1",d:"+7.8"},{p:"Felicio + Caboclo",j:"+4.2",d:"+9.1"}].map((x,i)=>(
+                  <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:i<2?"1px solid #1e3a5f15":"none"}}>
+                    <span style={{fontSize:12,color:"#ccd6e0"}}>{x.p}</span>
+                    <div style={{display:"flex",gap:12}}><span style={{fontSize:11,color:"#22C55E",fontWeight:700}}>JOI {x.j}</span><span style={{fontSize:11,color:"#3B82F6",fontWeight:700}}>JDI {x.d}</span></div>
+                  </div>
+                ))}
+              </div>
+              <div style={ic}>
+                <div style={{fontSize:12,color:"#8899aa",marginBottom:10,fontWeight:600}}>Melhor Lineup (5-man)</div>
+                <div style={{textAlign:"center",padding:10}}>
+                  <div style={{fontSize:18,fontWeight:800,color:"#009C3B",fontFamily:fn}}>+12.4 NETRTG</div>
+                  <div style={{fontSize:11,color:"#8899aa",margin:"8px 0"}}>Santos • Raulzinho • Yago • Felicio • Caboclo</div>
+                  <div style={{fontSize:10,color:"#667788"}}>247 min juntos • 68% win rate</div>
+                </div>
+              </div>
+            </div>
+          </div>}
+          {cTab==="context"&&!isC&&<div>
+            <h4 style={{color:"#fff",fontSize:14,fontWeight:700,margin:"0 0 12px"}}>Context Analyzer — Performance por Condição</h4>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+              <div style={ic}>
+                <div style={{fontSize:12,color:"#8899aa",marginBottom:8,fontWeight:600}}>Context Analyzer</div>
+                {[{c:"Golden Score",v:"78% vitória",vs:"vs 62% regular"},{c:"Altitude > 1000m",v:"-2.3% pace",vs:"vs nível do mar"},{c:"Provas matinais",v:"+3.2%",vs:"vs vespertinas"}].map((x,i)=>(
+                  <div key={i} style={{padding:"6px 0",borderBottom:i<2?"1px solid #1e3a5f15":"none"}}>
+                    <div style={{fontSize:12,color:"#ccd6e0",fontWeight:600}}>{x.c}</div>
+                    <div style={{fontSize:11,display:"flex",justifyContent:"space-between"}}><span style={{color:"#22C55E",fontWeight:700}}>{x.v}</span><span style={{color:"#667788"}}>{x.vs}</span></div>
+                  </div>
+                ))}
+              </div>
+              <div style={ic}>
+                <div style={{fontSize:12,color:"#8899aa",marginBottom:8,fontWeight:600}}>Rivalry Tracker</div>
+                {[{r:"vs. R. Dicko (FRA)",rc:"2W-1L",d:"1 ippon, média 3:42"},{r:"vs. I. Ortiz (CUB)",rc:"1W-2L",d:"golden score focus"}].map((x,i)=>(
+                  <div key={i} style={{padding:"6px 0",borderBottom:i<1?"1px solid #1e3a5f15":"none"}}>
+                    <div style={{fontSize:12,color:"#ccd6e0",fontWeight:600}}>{x.r}</div>
+                    <div style={{fontSize:11,display:"flex",justifyContent:"space-between"}}><span style={{color:"#FBBF24",fontWeight:700}}>{x.rc}</span><span style={{color:"#667788"}}>{x.d}</span></div>
+                  </div>
+                ))}
+              </div>
+              <div style={ic}>
+                <div style={{fontSize:12,color:"#8899aa",marginBottom:8,fontWeight:600}}>Peak Performance</div>
+                <div style={{textAlign:"center",padding:"8px 0"}}>
+                  <div style={{fontSize:16,fontWeight:800,color:"#EC4899"}}>Jul 2028</div>
+                  <div style={{fontSize:10,color:"#667788",margin:"4px 0"}}>Pico projetado</div>
+                  <div style={{fontSize:10,color:"#8899aa",marginTop:8}}>Taper: 14 dias</div>
+                  <div style={{fontSize:10,color:"#8899aa"}}>Carga: 24h/sem</div>
+                  <div style={{fontSize:10,color:"#8899aa"}}>Sono: 8.5h</div>
+                </div>
+              </div>
+            </div>
+          </div>}
+          {cTab==="health"&&<div>
+            <h4 style={{color:"#fff",fontSize:14,fontWeight:700,margin:"0 0 12px"}}>Health — Saúde & Carga</h4>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+              <div style={ic}>
+                <div style={{fontSize:12,color:"#8899aa",marginBottom:10,fontWeight:600}}>Semáforo de Carga</div>
+                {[{n:"Atleta A",a:0.95,l:"Ideal",c:"#22C55E"},{n:"Atleta B",a:1.35,l:"Atenção",c:"#FBBF24"},{n:"Atleta C",a:1.65,l:"Risco",c:"#EF4444"}].map((x,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 0",borderBottom:i<2?"1px solid #1e3a5f15":"none"}}>
+                    <div style={{width:8,height:8,borderRadius:"50%",background:x.c,boxShadow:`0 0 8px ${x.c}50`}}/><span style={{fontSize:12,color:"#ccd6e0",flex:1}}>{x.n}</span><span style={{fontSize:10,color:"#667788"}}>ACWR: {x.a}</span><span style={{fontSize:10,fontWeight:700,color:x.c,background:`${x.c}15`,padding:"2px 8px",borderRadius:10}}>{x.l}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={ic}>
+                <div style={{fontSize:12,color:"#8899aa",marginBottom:10,fontWeight:600}}>Extensões {isC?"Coletivo":"Individual"}</div>
+                {(isC?["Carga (minutos/sessões)","ACWR por jogador","Wellness diário","Histórico de lesões"]:["Peso competitivo (combates)","Ciclo menstrual tracking","Periodização de pico","Taper para competições-alvo"]).map((e,i)=>(<div key={i} style={{fontSize:11,color:"#ccd6e0",padding:"6px 0",borderBottom:i<3?"1px solid #1e3a5f15":"none",display:"flex",alignItems:"center",gap:6}}><span style={{color:"#009C3B"}}>✓</span> {e}</div>))}
+              </div>
+            </div>
+          </div>}
+        </div>
+      </div>
+    );
+  };
+  const renderCompetition = () => (
+    <div style={{display:"flex",flexDirection:"column",gap:20}}>
+      <div style={cd}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+          <h3 style={{color:"#fff",fontSize:15,fontWeight:700,margin:0,fontFamily:fn}}>Classificação Olímpica — Los Angeles 2028</h3>
+          <span style={{fontSize:12,color:"#FFDF00",fontWeight:600}}>852 dias restantes</span>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
+          {[{m:"Ginástica",v:"5/5",p:100,s:"✓ Completo"},{m:"Surf",v:"4/4",p:100,s:"✓ Completo"},{m:"Skate",v:"4/4",p:100,s:"✓ Completo"},{m:"Judô",v:"12/14",p:86,s:"Em andamento"},{m:"Atletismo",v:"28/40",p:70,s:"Em andamento"},{m:"Vela",v:"6/8",p:75,s:"Em andamento"},{m:"Natação",v:"8/16",p:50,s:"Em andamento"},{m:"Canoagem",v:"4/6",p:67,s:"Em andamento"},{m:"Boxe",v:"2/6",p:33,s:"Atenção"}].map((q,i)=>(
+            <div key={i} style={{...ic,borderColor:q.p===100?"#22C55E20":q.p<50?"#EF444420":"#1e3a5f20"}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}><span style={{fontSize:13,color:"#ccd6e0",fontWeight:600}}>{q.m}</span><span style={{fontSize:9,fontWeight:700,padding:"2px 8px",borderRadius:20,color:q.p===100?"#22C55E":q.p<50?"#EF4444":"#FBBF24",background:q.p===100?"#22C55E15":q.p<50?"#EF444415":"#FBBF2415"}}>{q.s}</span></div>
+              <div style={{fontSize:20,fontWeight:800,color:"#fff",fontFamily:fn}}>{q.v}</div>
+              <div style={{fontSize:11,color:"#667788",marginBottom:6}}>vagas conquistadas</div>
+              <Bar v={q.p} c={q.p===100?"#22C55E":q.p<50?"#EF4444":"#FBBF24"} w="100%"/>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+  const renderStrategy = () => (
+    <div style={{display:"flex",flexDirection:"column",gap:20}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14}}>
+        {[{l:"Custo por Medalha",v:"R$18.2M",s:"↓12% vs Paris 2024",c:"#009C3B"},{l:"Orçamento LA 2028",v:"R$1.8B",s:"Ciclo completo",c:"#3B82F6"},{l:"ROI Laboratório",v:"4.2x",s:"Para cada R$1",c:"#FFDF00"}].map((k,i)=>(
+          <div key={i} style={{...cd,textAlign:"center"}}>
+            <div style={{fontSize:11,color:"#667788",textTransform:"uppercase",letterSpacing:1.5,marginBottom:8}}>{k.l}</div>
+            <div style={{fontSize:36,fontWeight:800,color:k.c,fontFamily:fn}}>{k.v}</div>
+            <div style={{fontSize:12,color:"#8899aa",marginTop:4}}>{k.s}</div>
+          </div>
+        ))}
+      </div>
+      <div style={cd}>
+        <h3 style={{color:"#fff",fontSize:15,fontWeight:700,margin:"0 0 20px",fontFamily:fn}}>Talent Pipeline — Funil de Desenvolvimento</h3>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:0}}>
+          {[{s:"Base",c:2840,cl:"#3B82F6",w:260},{s:"Desenvolvimento",c:860,cl:"#8B5CF6",w:210},{s:"Nacional",c:320,cl:"#EC4899",w:160},{s:"Elite",c:120,cl:"#F59E0B",w:120},{s:"Olímpico",c:45,cl:"#009C3B",w:90}].map((s,i)=>(
+            <div key={i} style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
+              <div style={{width:s.w,height:56,background:`${s.cl}25`,border:`2px solid ${s.cl}50`,borderRadius:i===0?"12px 0 0 12px":i===4?"0 12px 12px 0":0,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <div style={{fontSize:18,fontWeight:800,color:s.cl,fontFamily:fn}}>{s.c.toLocaleString()}</div>
+              </div>
+              <div style={{fontSize:11,color:"#8899aa",marginTop:8,fontWeight:600}}>{s.s}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{textAlign:"center",marginTop:20,fontSize:13,color:"#556677"}}>Taxa de conversão Base → Olímpico: <strong style={{color:"#009C3B"}}>1.6%</strong> — Meta: <strong style={{color:"#FFDF00"}}>1.8%</strong></div>
+      </div>
+      <div style={cd}>
+        <h3 style={{color:"#fff",fontSize:15,fontWeight:700,margin:"0 0 20px",fontFamily:fn}}>Investimento por Modalidade vs. Resultados</h3>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:12}}>
+          {[{n:"Atletismo",at:62,m:4,b:45.2,t:"+12%",c:"#FFB020"},{n:"Judô",at:28,m:3,b:32.1,t:"+8%",c:"#3B82F6"},{n:"Natação",at:35,m:2,b:28.5,t:"+5%",c:"#06B6D4"},{n:"Vela",at:18,m:2,b:22.3,t:"+15%",c:"#8B5CF6"},{n:"Ginástica",at:14,m:3,b:19.8,t:"+22%",c:"#EC4899"},{n:"Surf",at:8,m:1,b:15.4,t:"+18%",c:"#10B981"},{n:"Skate",at:10,m:2,b:12.6,t:"+30%",c:"#F43F5E"},{n:"Canoagem",at:16,m:1,b:18.2,t:"+10%",c:"#F59E0B"},{n:"Boxe",at:12,m:1,b:14.3,t:"+7%",c:"#EF4444"},{n:"Basquete",at:24,m:0,b:20.1,t:"+3%",c:"#F97316"}].map((x,i)=>(
+            <div key={i} style={{background:"#0a1628",borderRadius:12,padding:16,textAlign:"center",border:"1px solid #1e3a5f15",position:"relative",overflow:"hidden"}}>
+              <div style={{position:"absolute",bottom:0,left:0,right:0,height:`${x.b*1.8}%`,background:`${x.c}12`,transition:"height 1s ease"}}/>
+              <div style={{position:"relative"}}>
+                <div style={{fontSize:12,color:x.c,fontWeight:700,marginBottom:4}}>{x.n}</div>
+                <div style={{fontSize:22,fontWeight:800,color:"#fff",fontFamily:fn}}>R${x.b}M</div>
+                <div style={{fontSize:11,color:"#667788",marginTop:2}}>{x.at} atletas</div>
+                <div style={{display:"flex",justifyContent:"center",gap:2,marginTop:6}}>
+                  {Array(x.m).fill(0).map((_,j)=><span key={j} style={{fontSize:14}}>🏅</span>)}
+                  {x.m===0&&<span style={{fontSize:11,color:"#445566"}}>—</span>}
+                </div>
+                <div style={{fontSize:11,color:"#22C55E",fontWeight:600,marginTop:4}}>{x.t}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={cd}>
+        <h3 style={{color:"#fff",fontSize:15,fontWeight:700,margin:"0 0 16px",fontFamily:fn}}>Confederação Connect — Status de Integração</h3>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:10}}>
+          {[{n:"CBAt",s:"active",sp:"Atletismo"},{n:"CBJ",s:"active",sp:"Judô"},{n:"CBDA",s:"active",sp:"Natação"},{n:"CBG",s:"active",sp:"Ginástica"},{n:"CBSurf",s:"active",sp:"Surf"},{n:"CBSk",s:"active",sp:"Skate"},{n:"CBVela",s:"pending",sp:"Vela"},{n:"CBC",s:"pending",sp:"Canoagem"},{n:"CBBoxe",s:"pending",sp:"Boxe"},{n:"CBB",s:"active",sp:"Basquete"},{n:"CBV",s:"inactive",sp:"Vôlei"},{n:"CBT",s:"inactive",sp:"Tênis"}].map((c,i)=>(
+            <div key={i} style={{background:"#0a1628",borderRadius:10,padding:14,textAlign:"center",border:`1px solid ${c.s==="active"?"#22C55E20":c.s==="pending"?"#FBBF2420":"#1e3a5f15"}`,opacity:c.s==="inactive"?.5:1}}>
+              <div style={{width:36,height:36,borderRadius:8,margin:"0 auto 8px",background:c.s==="active"?"#009C3B20":c.s==="pending"?"#FBBF2420":"#1e3a5f20",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,color:c.s==="active"?"#009C3B":c.s==="pending"?"#FBBF24":"#556677"}}>{c.n.substring(0,3)}</div>
+              <div style={{fontSize:11,color:"#ccd6e0",fontWeight:600}}>{c.n}</div>
+              <div style={{fontSize:10,color:"#556677"}}>{c.sp}</div>
+              <div style={{fontSize:9,marginTop:6,fontWeight:700,padding:"2px 6px",borderRadius:10,color:c.s==="active"?"#22C55E":c.s==="pending"?"#FBBF24":"#556677",background:c.s==="active"?"#22C55E15":c.s==="pending"?"#FBBF2415":"#1e3a5f15"}}>{c.s==="active"?"INTEGRADA":c.s==="pending"?"PENDENTE":"NÃO INICIADA"}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+  const renderHealth = () => (
+    <div style={{display:"flex",flexDirection:"column",gap:20}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+        <div style={cd}>
+          <h3 style={{color:"#fff",fontSize:15,fontWeight:700,margin:"0 0 16px",fontFamily:fn}}>Semáforo de Carga — Equipe Elite</h3>
+          {[{n:"Rebeca Andrade",l:"Ideal",c:"#22C55E",a:1.05,h:32},{n:"Caio Bonfim",l:"Ideal",c:"#22C55E",a:0.95,h:28},{n:"Bia Souza",l:"Atenção",c:"#FBBF24",a:1.35,h:36},{n:"Alison dos Santos",l:"Atenção",c:"#FBBF24",a:1.42,h:34},{n:"Ana Marcela",l:"Ideal",c:"#22C55E",a:0.88,h:30},{n:"Isaquias",l:"Risco",c:"#EF4444",a:1.65,h:40}].map((x,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"#0a1628",borderRadius:10,marginBottom:6,border:`1px solid ${x.c}20`}}>
+              <div style={{width:10,height:10,borderRadius:"50%",background:x.c,boxShadow:`0 0 10px ${x.c}50`}}/><span style={{fontSize:13,color:"#ccd6e0",flex:1}}>{x.n}</span><span style={{fontSize:11,color:"#667788"}}>ACWR: {x.a}</span><span style={{fontSize:11,color:"#667788"}}>{x.h}h</span><span style={{fontSize:10,fontWeight:700,color:x.c,background:`${x.c}15`,padding:"3px 10px",borderRadius:20}}>{x.l}</span>
+            </div>
+          ))}
+        </div>
+        <div style={cd}>
+          <h3 style={{color:"#fff",fontSize:15,fontWeight:700,margin:"0 0 16px",fontFamily:fn}}>Wellness Semanal — Rebeca Andrade</h3>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:8}}>
+            {[{d:"Seg",sl:8.2,f:3,st:2,so:2},{d:"Ter",sl:7.5,f:4,st:3,so:3},{d:"Qua",sl:7.8,f:5,st:4,so:4},{d:"Qui",sl:6.9,f:6,st:5,so:5},{d:"Sex",sl:7.2,f:7,st:4,so:6},{d:"Sáb",sl:8.5,f:4,st:2,so:4},{d:"Dom",sl:9.1,f:2,st:1,so:2}].map((w,i)=>(
+              <div key={i} style={{textAlign:"center"}}>
+                <div style={{fontSize:11,color:"#667788",marginBottom:6,fontWeight:600}}>{w.d}</div>
+                {[[w.sl,"#3B82F6",true],[w.f,"fat"],[w.st,"str"],[w.so,"sor"]].map(([v,t],j)=>{
+                  const isSleep=t==="#3B82F6";const val=typeof v==="number"?v:0;const clr=isSleep?"#3B82F6":val>5?"#EF4444":val>3?"#FBBF24":"#22C55E";
+                  return <div key={j} style={{width:"100%",height:28,borderRadius:6,marginBottom:3,background:isSleep?`#3B82F630`:`${clr}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:isSleep?"#3B82F6":clr,fontWeight:700}}>{isSleep?`${val}h`:val}</div>
+                })}
+              </div>
+            ))}
+          </div>
+          <div style={{display:"flex",gap:16,marginTop:12,justifyContent:"center"}}>
+            {[{l:"Sono",c:"#3B82F6"},{l:"Fadiga",c:"#FBBF24"},{l:"Estresse",c:"#EC4899"},{l:"Dor",c:"#EF4444"}].map((x,i)=>(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:8,height:8,borderRadius:2,background:x.c}}/><span style={{fontSize:10,color:"#667788"}}>{x.l}</span></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+  const renderAthletes = () => (
+    <div style={{display:"flex",flexDirection:"column",gap:20}}>
+      <div style={{display:"flex",gap:12,alignItems:"center"}}>
+        <div style={{flex:1,...ic,padding:"12px 20px",display:"flex",alignItems:"center",gap:12}}>
+          <span style={{color:"#556677"}}>⌕</span>
+          <span style={{color:"#445566",fontSize:14}}>Buscar atleta por nome, modalidade ou confederação...</span>
+        </div>
+        {["Todos","Elite","Desenvolvimento","Base"].map((f,i)=>(
+          <button key={i} style={{background:i===0?"#009C3B":"#0d1b2a",border:"1px solid #1e3a5f30",borderRadius:10,padding:"10px 18px",color:i===0?"#fff":"#8899aa",fontSize:13,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>{f}</button>
+        ))}
+      </div>
+      <div style={cd}>
+        <div style={{display:"flex",gap:24}}>
+          <div style={{width:100,height:100,borderRadius:20,background:"linear-gradient(135deg,#009C3B,#002776)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:32,fontWeight:800,color:"#FFDF00",fontFamily:fn,flexShrink:0}}>RA</div>
+          <div style={{flex:1}}>
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:4,flexWrap:"wrap"}}>
+              <h2 style={{color:"#fff",fontSize:22,fontWeight:800,margin:0,fontFamily:fn}}>Rebeca Andrade</h2>
+              <Dot s="green"/>
+              <span style={{fontSize:11,background:"#009C3B20",color:"#009C3B",padding:"3px 10px",borderRadius:20,fontWeight:600}}>ELITE</span>
+              <span style={{fontSize:11,background:"#3B82F620",color:"#3B82F6",padding:"3px 10px",borderRadius:20,fontWeight:600}}>CLASSIFICADA LA 2028</span>
+            </div>
+            <div style={{fontSize:14,color:"#8899aa",marginBottom:12}}>Ginástica Artística — Solo, Salto, Individual Geral</div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:16}}>
+              {[{l:"Ranking",v:"#1"},{l:"Idade",v:"26"},{l:"Medalhas Ol.",v:"6"},{l:"Confederação",v:"CBG"},{l:"Score Médio",v:"14.450"},{l:"Readiness",v:"97%"}].map((x,i)=>(
+                <div key={i}><div style={{fontSize:10,color:"#556677",textTransform:"uppercase",letterSpacing:1}}>{x.l}</div><div style={{fontSize:18,fontWeight:700,color:"#fff",fontFamily:fn}}>{x.v}</div></div>
+              ))}
+            </div>
+          </div>
+          <Ring v={97} sz={90}/>
+        </div>
+        <div style={{display:"flex",gap:0,marginTop:24,borderBottom:"1px solid #1e3a5f30"}}>
+          {["Performance","Saúde & Carga","Competições","Histórico","Documentos"].map((t,i)=>(
+            <div key={i} style={{padding:"10px 20px",fontSize:13,fontWeight:i===0?700:500,color:i===0?"#009C3B":"#667788",cursor:"pointer",borderBottom:i===0?"2px solid #009C3B":"2px solid transparent"}}>{t}</div>
+          ))}
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:16,marginTop:20}}>
+          <div style={{...ic,padding:20,gridColumn:"1/3"}}>
+            <div style={{fontSize:13,color:"#8899aa",marginBottom:16,fontWeight:600}}>Evolução de Score — Últimos 12 meses</div>
+            <div style={{display:"flex",alignItems:"flex-end",gap:6,height:120}}>
+              {[13.8,14.0,13.9,14.2,14.1,14.3,14.0,14.4,14.2,14.5,14.3,14.45].map((v,i)=>(
+                <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                  <div style={{width:"100%",height:`${(v-13.5)*100}px`,background:"linear-gradient(180deg,#009C3B,#009C3B40)",borderRadius:"4px 4px 0 0",opacity:.6+(i/12)*.4}}/>
+                  <span style={{fontSize:9,color:"#556677"}}>{["J","F","M","A","M","J","J","A","S","O","N","D"][i]}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{...ic,padding:20}}>
+            <div style={{fontSize:13,color:"#8899aa",marginBottom:16,fontWeight:600}}>Indicadores Chave</div>
+            {[{l:"D-Score",v:"6.400",d:"+0.2"},{l:"E-Score",v:"8.050",d:"+0.15"},{l:"Consistência",v:"94%",d:"+3%"},{l:"Risco Lesão",v:"Baixo",d:"—"},{l:"Carga Semanal",v:"32h",d:"Ideal"}].map((x,i)=>(
+              <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:i<4?"1px solid #1e3a5f15":"none"}}>
+                <span style={{fontSize:12,color:"#8899aa"}}>{x.l}</span>
+                <div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:14,fontWeight:700,color:"#fff",fontFamily:fn}}>{x.v}</span><span style={{fontSize:10,color:"#22C55E"}}>{x.d}</span></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+  const renderPublic = () => (
+    <div style={{display:"flex",flexDirection:"column",gap:20}}>
+      <div style={{...cd,background:"linear-gradient(135deg,#0d1b2a,#002776)",textAlign:"center",padding:32}}>
+        <div style={{fontSize:11,color:"#FFDF00",textTransform:"uppercase",letterSpacing:3,marginBottom:8,fontWeight:600}}>Camada Pública</div>
+        <div style={{fontSize:28,fontWeight:800,color:"#fff",fontFamily:fn,marginBottom:8}}>Time Brasil <span style={{color:"#009C3B"}}>Hub</span></div>
+        <div style={{fontSize:14,color:"#8899aa",maxWidth:600,margin:"0 auto"}}>Portal aberto ao público com informações consolidadas de todos os esportes olímpicos brasileiros.</div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14}}>
+        {[{t:"Perfis de Atletas",d:"583 atletas com bio, histórico, resultados e medalhas. Para fãs, jornalistas e pesquisadores.",i:"👤",c:"#009C3B"},{t:"Classificação Olímpica",d:"Status de vagas LA 2028 por modalidade em tempo real. Countdown e projeções.",i:"🎯",c:"#FFDF00"},{t:"Calendário Unificado",d:"Todas as competições de todas as modalidades em um lugar. Filtros por esporte e data.",i:"📅",c:"#3B82F6"},{t:"Rankings Nacionais",d:"Rankings oficiais com histórico de evolução e comparativos internacionais.",i:"📊",c:"#EC4899"},{t:"Resultados ao Vivo",d:"Placar e resultados de competições internacionais com brasileiros em tempo real.",i:"⚡",c:"#F97316"},{t:"Arquivo Histórico",d:"Medalhas, recordes e marcos do esporte olímpico brasileiro desde 1920.",i:"🏛️",c:"#8B5CF6"}].map((x,i)=>(
+          <div key={i} style={{...cd,cursor:"pointer",transition:"all .3s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=x.c+"40"}} onMouseLeave={e=>{e.currentTarget.style.borderColor="#1e3a5f30"}}>
+            <div style={{fontSize:28,marginBottom:12}}>{x.i}</div>
+            <div style={{fontSize:15,fontWeight:700,color:"#fff",marginBottom:8,fontFamily:fn}}>{x.t}</div>
+            <div style={{fontSize:12,color:"#8899aa",lineHeight:1.5}}>{x.d}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+        <div style={cd}>
+          <h3 style={{color:"#fff",fontSize:15,fontWeight:700,margin:"0 0 16px",fontFamily:fn}}>Dados Públicos vs. Restritos</h3>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            <div style={ic}>
+              <div style={{fontSize:12,color:"#22C55E",fontWeight:700,marginBottom:10}}>✓ PÚBLICO</div>
+              {["Perfil do atleta (bio, idade)","Resultados de competições","Rankings e classificação","Calendário de eventos","Medalhas e recordes","Estatísticas gerais"].map((x,i)=>(<div key={i} style={{fontSize:11,color:"#ccd6e0",padding:"5px 0",borderBottom:i<5?"1px solid #1e3a5f15":"none"}}>{x}</div>))}
+            </div>
+            <div style={ic}>
+              <div style={{fontSize:12,color:"#EF4444",fontWeight:700,marginBottom:10}}>🔒 RESTRITO</div>
+              {["Dados de saúde e lesões","Carga de treino e ACWR","Scouting tático e reports","Chemistry/Context Analyzer","Dados financeiros e ROI","Wellness diário"].map((x,i)=>(<div key={i} style={{fontSize:11,color:"#667788",padding:"5px 0",borderBottom:i<5?"1px solid #1e3a5f15":"none"}}>{x}</div>))}
+            </div>
+          </div>
+        </div>
+        <div style={cd}>
+          <h3 style={{color:"#fff",fontSize:15,fontWeight:700,margin:"0 0 16px",fontFamily:fn}}>Impacto</h3>
+          {[{m:"Visibilidade",d:"Modalidades invisíveis ganham exposição contínua",c:"#009C3B"},{m:"Engajamento",d:"Público acompanha o programa olímpico o ano inteiro",c:"#3B82F6"},{m:"Patrocinadores",d:"Plataforma de alta visibilidade para parceiros comerciais",c:"#FFDF00"},{m:"Imprensa",d:"Dados oficiais alimentam cobertura jornalística",c:"#EC4899"},{m:"Inspiração",d:"Jovens veem a trajetória de quem chegou à Olimpíada",c:"#F97316"}].map((x,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"flex-start",gap:12,padding:"10px 0",borderBottom:i<4?"1px solid #1e3a5f15":"none"}}>
+              <div style={{width:8,height:8,borderRadius:"50%",background:x.c,marginTop:4,flexShrink:0,boxShadow:`0 0 8px ${x.c}50`}}/>
+              <div><div style={{fontSize:13,color:"#fff",fontWeight:600}}>{x.m}</div><div style={{fontSize:11,color:"#8899aa"}}>{x.d}</div></div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{...cd,textAlign:"center"}}>
+        <div style={{fontSize:13,color:"#556677",marginBottom:8}}>Nenhum comitê olímpico na América Latina possui uma plataforma pública de analytics esportivo.</div>
+        <div style={{fontSize:16,fontWeight:700,color:"#009C3B",fontFamily:fn}}>O Brasil seria o primeiro.</div>
+      </div>
+    </div>
+  );
+  return (
+    <div style={{minHeight:"100vh",background:"#080f1a",fontFamily:"'Segoe UI',-apple-system,sans-serif",color:"#ccd6e0"}}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}*{box-sizing:border-box}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:#0a1628}::-webkit-scrollbar-thumb{background:#1e3a5f;border-radius:3px}`}</style>
+      <div style={{background:"linear-gradient(90deg,#0a1628,#0d1b2a,#0a1628)",borderBottom:"1px solid #1e3a5f30",padding:"0 32px",height:64,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100,backdropFilter:"blur(20px)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:16}}>
+          <img src="data:image/png;base64,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" style={{height:40,objectFit:"contain"}}/>
+          <div>
+            <div style={{fontSize:16,fontWeight:800,color:"#fff",fontFamily:fn,letterSpacing:-.5}}>TIME BRASIL <span style={{color:"#009C3B"}}>INTELLIGENCE</span></div>
+            <div style={{fontSize:10,color:"#556677",letterSpacing:2,textTransform:"uppercase"}}>Comitê Olímpico do Brasil — Analytics Platform</div>
+          </div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:20}}>
+          <span style={{fontSize:12,color:"#009C3B",background:"#009C3B15",padding:"4px 12px",borderRadius:20,fontWeight:600}}>🎯 LA 2028 — 852 dias</span>
+          <div style={{width:36,height:36,borderRadius:10,background:"linear-gradient(135deg,#002776,#009C3B)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}}>BF</div>
+        </div>
+      </div>
+      <div style={{display:"flex",minHeight:"calc(100vh - 64px)"}}>
+        <div style={{width:220,background:"#0a1628",borderRight:"1px solid #1e3a5f20",padding:"24px 12px",display:"flex",flexDirection:"column",gap:4,position:"sticky",top:64,height:"calc(100vh - 64px)"}}>
+          {secs.map(s=>(
+            <button key={s.id} onClick={()=>{setSec(s.id);if(s.id==="confederations"&&!selConf)setSelConf(confs[0]);}} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderRadius:10,border:"none",background:sec===s.id?"#009C3B15":"transparent",color:sec===s.id?"#009C3B":"#667788",fontSize:13,fontWeight:sec===s.id?700:500,cursor:"pointer",textAlign:"left",width:"100%",borderLeft:sec===s.id?"3px solid #009C3B":"3px solid transparent"}}><span style={{fontSize:16,width:24,textAlign:"center"}}>{s.i}</span>{s.l}</button>
+          ))}
+          <div style={{flex:1}}/>
+          <div style={{background:"#152238",borderRadius:12,padding:16,margin:"0 4px",border:"1px solid #1e3a5f20"}}>
+            <div style={{fontSize:11,color:"#556677",marginBottom:8,fontWeight:600,textTransform:"uppercase",letterSpacing:1}}>Ciclo Olímpico</div>
+            <div style={{fontSize:14,fontWeight:700,color:"#fff",marginBottom:4}}>LA 2028</div>
+            <Bar v={28} c="#009C3B" w="100%"/>
+            <div style={{fontSize:10,color:"#667788",marginTop:6}}>28% do ciclo concluído</div>
+          </div>
+        </div>
+        <div style={{flex:1,padding:28,overflowY:"auto"}}>
+          <div style={{marginBottom:24}}>
+            <h1 style={{fontSize:24,fontWeight:800,color:"#fff",margin:"0 0 4px",fontFamily:fn}}>{secs.find(s=>s.id===sec)?.l}</h1>
+            <div style={{fontSize:13,color:"#556677"}}>
+              {sec==="overview"&&"Visão consolidada do Time Brasil — Ciclo LA 2028"}
+              {sec==="athletes"&&"Perfil unificado e 360° de cada atleta do Time Brasil"}
+              {sec==="confederations"&&"Drill-down por confederação — Módulos especializados"}
+              {sec==="competition"&&"Classificação olímpica e análise competitiva"}
+              {sec==="health"&&"Monitoramento de wellness, carga e registro médico"}
+              {sec==="strategy"&&"Dashboard estratégico para gestão do COB"}
+              {sec==="public"&&"Portal aberto ao público — Vitrine digital do esporte brasileiro"}
+            </div>
+          </div>
+          {sec==="overview"&&renderOverview()}
+          {sec==="athletes"&&renderAthletes()}
+          {sec==="confederations"&&renderConf()}
+          {sec==="competition"&&renderCompetition()}
+          {sec==="health"&&renderHealth()}
+          {sec==="strategy"&&renderStrategy()}
+          {sec==="public"&&renderPublic()}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+</script>
+</body>
+</html>

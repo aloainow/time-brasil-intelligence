@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Time Brasil Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #060b14; color: #ccd6e0; font-family: 'Sora', 'Segoe UI', sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+.logo { width: 60px; height: 60px; border-radius: 16px; background: linear-gradient(135deg, #009C3B, #002776, #FFDF00); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; color: #fff; margin-bottom: 20px; }
+h1 { font-size: 32px; font-weight: 800; color: #fff; margin-bottom: 6px; }
+h1 span { color: #009C3B; }
+.sub { font-size: 14px; color: #556677; margin-bottom: 40px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-width: 960px; width: 100%; }
+.card { background: linear-gradient(135deg, #0d1b2a, #152238); border-radius: 20px; padding: 32px; border: 1px solid #1e3a5f30; text-decoration: none; color: inherit; transition: all 0.3s; position: relative; overflow: hidden; }
+.card:hover { transform: translateY(-4px); border-color: #009C3B40; }
+.card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 20px 20px 0 0; }
+.card:nth-child(1)::before { background: linear-gradient(90deg, #009C3B, #FFDF00, #002776); }
+.card:nth-child(2)::before { background: linear-gradient(90deg, #3B82F6, #EC4899); }
+.card:nth-child(3)::before { background: linear-gradient(90deg, #F97316, #FFDF00); }
+.card-icon { font-size: 36px; margin-bottom: 16px; }
+.card-title { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+.card-desc { font-size: 13px; color: #8899aa; line-height: 1.6; }
+.card-badge { display: inline-block; font-size: 10px; padding: 4px 12px; border-radius: 20px; font-weight: 700; margin-top: 16px; }
+.badge-green { background: #009C3B15; color: #009C3B; }
+.badge-blue { background: #3B82F615; color: #3B82F6; }
+.badge-orange { background: #F9731615; color: #F97316; }
+.footer { margin-top: 48px; text-align: center; font-size: 11px; color: #334455; }
+.bar { width: 60px; height: 3px; background: linear-gradient(90deg, #009C3B, #FFDF00, #002776); border-radius: 2px; margin: 0 auto 20px; }
+@media (max-width: 640px) { h1 { font-size: 24px; } .cards { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="logo">TB</div>
+<h1>TIME BRASIL <span>INTELLIGENCE</span></h1>
+<div class="sub">Plataforma Unificada de Inteligência Esportiva — LA 2028</div>
+<div class="bar"></div>
+
+<div class="cards">
+  <a href="dashboard.html" class="card">
+    <div class="card-icon">📊</div>
+    <div class="card-title">Dashboard Analytics</div>
+    <div class="card-desc">Plataforma completa com 7 módulos: Visão Geral, Atletas 360, Confederações com drill-down, Competição, Saúde & Carga, Estratégico e Portal Público.</div>
+    <span class="card-badge badge-green">7 MÓDULOS INTERATIVOS</span>
+  </a>
+
+  <a href="arquitetura.html" class="card">
+    <div class="card-icon">🔧</div>
+    <div class="card-title">Arquitetura do Sistema</div>
+    <div class="card-desc">Visão técnica das 4 camadas: COB Estratégico, Core Engine, Confederações (Coletivos + Individuais) e Portal Público. 12 confederações, 4 módulos core.</div>
+    <span class="card-badge badge-blue">4 CAMADAS • 12 CONFEDERAÇÕES</span>
+  </a>
+
+  <a href="organograma.html" class="card">
+    <div class="card-icon">🗂️</div>
+    <div class="card-title">Organograma</div>
+    <div class="card-desc">Hierarquia completa do sistema em formato de organograma: COB → Módulos Estratégicos → Core Engine → Confederações → Portal Público.</div>
+    <span class="card-badge badge-orange">SVG INTERATIVO</span>
+  </a>
+</div>
+
+<div class="footer">
+  TIME BRASIL INTELLIGENCE — Proposta Confidencial<br>
+  Confederação Brasileira de Basketball • 2025
+</div>
+</body>
+</html>

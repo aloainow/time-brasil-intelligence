@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Time Brasil Intelligence — Arquitetura do Sistema</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<style>* { margin: 0; padding: 0; box-sizing: border-box; } body { background: #060b14; }</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+const SystemDiagram = () => {
+  const [loaded, setLoaded] = useState(false);
+  const [activeLayer, setActiveLayer] = useState(null);
+  const [activeConf, setActiveConf] = useState(null);
+  const [showFlow, setShowFlow] = useState(false);
+  const [phase, setPhase] = useState(0);
+  useEffect(() => {
+    setTimeout(() => setLoaded(true), 200);
+    setTimeout(() => setPhase(1), 600);
+    setTimeout(() => setPhase(2), 1200);
+    setTimeout(() => setPhase(3), 1800);
+    setTimeout(() => setShowFlow(true), 2400);
+  }, []);
+  const confColetivos = [
+    { id: "cbb", nm: "CBB", sp: "Basquete", cl: "#F97316", modules: ["Radar", "BasketBrain", "Chemistry", "Health"], status: "live", athletes: 24, icon: "🏀" },
+    { id: "cbv", nm: "CBV", sp: "Vôlei", cl: "#3B82F6", modules: ["Radar", "VolleyBrain", "Chemistry", "Health"], status: "live", athletes: 28, icon: "🏐" },
+    { id: "cbhb", nm: "CBHB", sp: "Handebol", cl: "#8B5CF6", modules: ["Radar", "HandBrain", "Chemistry", "Health"], status: "pending", athletes: 22, icon: "🤾" },
+    { id: "cbf", nm: "CBF", sp: "Futebol", cl: "#22C55E", modules: ["Radar", "FootBrain", "Chemistry", "Health"], status: "planned", athletes: 44, icon: "⚽" },
+  ];
+  const confIndividuais = [
+    { id: "cbj", nm: "CBJ", sp: "Judô", cl: "#EF4444", modules: ["Radar", "CombatBrain", "Context", "Health"], status: "live", athletes: 28, icon: "🥋", template: "Combate" },
+    { id: "cbat", nm: "CBAt", sp: "Atletismo", cl: "#FFB020", modules: ["Radar", "TrackBrain", "Context", "Health"], status: "live", athletes: 62, icon: "🏃", template: "Tempo/Marca" },
+    { id: "cbg", nm: "CBG", sp: "Ginástica", cl: "#EC4899", modules: ["Radar", "GymBrain", "Context", "Health"], status: "live", athletes: 14, icon: "🤸", template: "Pontuação" },
+    { id: "cbsurf", nm: "CBSurf", sp: "Surf", cl: "#10B981", modules: ["Radar", "SurfBrain", "Context", "Health"], status: "pending", athletes: 8, icon: "🏄", template: "Pontuação" },
+    { id: "cbda", nm: "CBDA", sp: "Natação", cl: "#06B6D4", modules: ["Radar", "AquaBrain", "Context", "Health"], status: "live", athletes: 35, icon: "🏊", template: "Tempo/Marca" },
+    { id: "cbsk", nm: "CBSk", sp: "Skate", cl: "#F43F5E", modules: ["Radar", "SkateBrain", "Context", "Health"], status: "live", athletes: 10, icon: "🛹", template: "Pontuação" },
+    { id: "cbvela", nm: "CBVela", sp: "Vela", cl: "#6366F1", modules: ["Radar", "SailBrain", "Context", "Health"], status: "pending", athletes: 18, icon: "⛵", template: "Match" },
+    { id: "cbc", nm: "CBC", sp: "Canoagem", cl: "#F59E0B", modules: ["Radar", "PaddleBrain", "Context", "Health"], status: "pending", athletes: 16, icon: "🛶", template: "Tempo/Marca" },
+  ];
+  const cobModules = [
+    { name: "Medal Projection", desc: "Projeção de medalhas LA 2028", icon: "🏅", cl: "#FFDF00" },
+    { name: "Athlete 360", desc: "Perfil unificado de 583 atletas", icon: "👤", cl: "#009C3B" },
+    { name: "ROI Dashboard", desc: "Investimento vs. resultados", icon: "📊", cl: "#3B82F6" },
+    { name: "Qualification", desc: "Tracking de vagas olímpicas", icon: "🎯", cl: "#EC4899" },
+    { name: "Talent Pipeline", desc: "Funil base → olímpico", icon: "📈", cl: "#8B5CF6" },
+    { name: "Strategic Health", desc: "Panorama consolidado de saúde", icon: "❤️", cl: "#EF4444" },
+  ];
+  const coreEngine = [
+    { name: "Radar", desc: "Monitoramento global", clCol: "#3B82F6", clInd: "#3B82F6", icon: "🌍" },
+    { name: "Report", desc: "Relatórios com IA", clCol: "#009C3B", clInd: "#009C3B", icon: "🧠" },
+    { name: "Chemistry / Context", desc: "Sinergia (col) ou Condições (ind)", clCol: "#F97316", clInd: "#EC4899", icon: "🧪" },
+    { name: "Health", desc: "Saúde & carga universal", clCol: "#EF4444", clInd: "#EF4444", icon: "🏥" },
+  ];
+  const stColor = (s) => s === "live" ? "#22C55E" : s === "pending" ? "#FBBF24" : "#556677";
+  const stLabel = (s) => s === "live" ? "ATIVO" : s === "pending" ? "EM INTEGRAÇÃO" : "PLANEJADO";
+  return (
+    <div style={{ minHeight: "100vh", background: "#060b14", fontFamily: "'Segoe UI',-apple-system,sans-serif", color: "#ccd6e0", overflow: "hidden" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap');
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @keyframes flowDown { 0% { transform: translateY(-8px); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(8px); opacity: 0; } }
+        @keyframes flowUp { 0% { transform: translateY(8px); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(-8px); opacity: 0; } }
+        @keyframes glow { 0%,100% { box-shadow: 0 0 20px rgba(0,156,59,0.2); } 50% { box-shadow: 0 0 40px rgba(0,156,59,0.4); } }
+        @keyframes orbit { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideLeft { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideRight { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+        .flow-dot { animation: flowDown 2s infinite; }
+        .flow-dot-up { animation: flowUp 2s infinite; }
+        .conf-card:hover { transform: translateY(-4px) scale(1.02); }
+        * { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a1628; }
+        ::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 3px; }
+      `}</style>
+      {/* HEADER */}
+      <div style={{ padding: "20px 40px", borderBottom: "1px solid #1e3a5f20", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{ fontSize: 28, fontWeight: 800, fontFamily: "'Sora',sans-serif", color: "#fff" }}>
+            TIME BRASIL <span style={{ color: "#009C3B" }}>INTELLIGENCE</span>
+          </div>
+          <span style={{ fontSize: 12, color: "#556677", borderLeft: "1px solid #1e3a5f40", paddingLeft: 16, marginLeft: 8 }}>Arquitetura do Sistema</span>
+        </div>
+        <span style={{ fontSize: 12, color: "#009C3B", background: "#009C3B15", padding: "6px 16px", borderRadius: 20, fontWeight: 600, fontFamily: "'Sora',sans-serif" }}>🎯 LA 2028</span>
+      </div>
+      <div style={{ padding: "32px 40px", display: "flex", flexDirection: "column", gap: 0 }}>
+        {/* ======== LAYER 1: COB ESTRATÉGICO ======== */}
+        <div style={{ opacity: phase >= 1 ? 1 : 0, transform: phase >= 1 ? "translateY(0)" : "translateY(30px)", transition: "all 0.8s cubic-bezier(0.4,0,0.2,1)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+            <div style={{ width: 4, height: 24, borderRadius: 2, background: "#009C3B" }} />
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#009C3B", fontFamily: "'Sora',sans-serif", textTransform: "uppercase", letterSpacing: 2 }}>Camada 1 — COB Estratégico</span>
+            <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, #009C3B30, transparent)" }} />
+            <span style={{ fontSize: 11, color: "#556677" }}>Visão consolidada de 33 confederações</span>
+          </div>
+          <div style={{ background: "linear-gradient(135deg, #0a1628, #0d1f35)", border: "1px solid #009C3B25", borderRadius: 20, padding: 24, position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "linear-gradient(90deg, #009C3B, #FFDF00, #002776)", borderRadius: "20px 20px 0 0" }} />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 12 }}>
+              {cobModules.map((m, i) => (
+                <div key={i} style={{ background: "#060b1480", borderRadius: 14, padding: 16, border: `1px solid ${m.cl}20`, textAlign: "center", cursor: "pointer", transition: "all 0.3s" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = m.cl + "60"; e.currentTarget.style.background = m.cl + "10"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = m.cl + "20"; e.currentTarget.style.background = "#060b1480"; }}>
+                  <div style={{ fontSize: 24, marginBottom: 8 }}>{m.icon}</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#fff", fontFamily: "'Sora',sans-serif", marginBottom: 4 }}>{m.name}</div>
+                  <div style={{ fontSize: 10, color: "#667788", lineHeight: 1.4 }}>{m.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        {/* ======== FLOW ARROWS COB → ENGINE ======== */}
+        <div style={{ display: "flex", justifyContent: "center", padding: "8px 0", gap: 40, opacity: showFlow ? 1 : 0, transition: "opacity 0.6s" }}>
+          {[0,1,2,3,4].map(i => (
+            <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+              <div className="flow-dot-up" style={{ width: 6, height: 6, borderRadius: "50%", background: "#009C3B", animationDelay: `${i * 0.3}s` }} />
+              <div style={{ width: 1, height: 16, background: "linear-gradient(180deg, #009C3B40, #3B82F640)" }} />
+              <div className="flow-dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "#3B82F6", animationDelay: `${i * 0.3}s` }} />
+            </div>
+          ))}
+        </div>
+        {/* ======== LAYER 2: CORE ENGINE ======== */}
+        <div style={{ opacity: phase >= 2 ? 1 : 0, transform: phase >= 2 ? "translateY(0)" : "translateY(30px)", transition: "all 0.8s cubic-bezier(0.4,0,0.2,1)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+            <div style={{ width: 4, height: 24, borderRadius: 2, background: "#3B82F6" }} />
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#3B82F6", fontFamily: "'Sora',sans-serif", textTransform: "uppercase", letterSpacing: 2 }}>Core Engine — Sport Analytics Framework</span>
+            <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, #3B82F630, transparent)" }} />
+            <span style={{ fontSize: 11, color: "#556677" }}>1 codebase → 33 configurações</span>
+          </div>
+          <div style={{ background: "linear-gradient(135deg, #0a1225, #111d33)", border: "1px solid #3B82F625", borderRadius: 20, padding: 24 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
+              {coreEngine.map((e, i) => (
+                <div key={i} style={{ background: "#060b1460", borderRadius: 16, padding: 20, border: "1px solid #1e3a5f30", position: "relative", overflow: "hidden" }}>
+                  <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${e.clCol}, ${e.clInd})` }} />
+                  <div style={{ fontSize: 22, marginBottom: 8 }}>{e.icon}</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", fontFamily: "'Sora',sans-serif", marginBottom: 4 }}>{e.name}</div>
+                  <div style={{ fontSize: 11, color: "#8899aa", marginBottom: 12 }}>{e.desc}</div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <span style={{ fontSize: 9, padding: "3px 8px", borderRadius: 8, background: e.clCol + "20", color: e.clCol, fontWeight: 600 }}>COLETIVO</span>
+                    <span style={{ fontSize: 9, padding: "3px 8px", borderRadius: 8, background: e.clInd + "20", color: e.clInd, fontWeight: 600 }}>INDIVIDUAL</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        {/* ======== FLOW ARROWS ENGINE → CONFEDERAÇÕES ======== */}
+        <div style={{ display: "flex", justifyContent: "center", padding: "8px 0", opacity: showFlow ? 1 : 0, transition: "opacity 0.6s" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ width: 200, height: 1, background: "linear-gradient(90deg, transparent, #F9731640)" }} />
+            <span style={{ fontSize: 10, color: "#556677", fontFamily: "'Sora',sans-serif", whiteSpace: "nowrap", padding: "0 12px" }}>configuração por esporte</span>
+            <div style={{ width: 200, height: 1, background: "linear-gradient(90deg, #EC489940, transparent)" }} />
+          </div>
+        </div>
+        {/* ======== LAYER 3: CONFEDERAÇÕES ======== */}
+        <div style={{ opacity: phase >= 3 ? 1 : 0, transform: phase >= 3 ? "translateY(0)" : "translateY(30px)", transition: "all 0.8s cubic-bezier(0.4,0,0.2,1)" }}>
+          {/* COLETIVOS */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+            <div style={{ width: 4, height: 24, borderRadius: 2, background: "#F97316" }} />
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#F97316", fontFamily: "'Sora',sans-serif", textTransform: "uppercase", letterSpacing: 2 }}>Camada 3A — Esportes Coletivos</span>
+            <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, #F9731630, transparent)" }} />
+            <span style={{ fontSize: 11, color: "#556677" }}>Chemistry Analyzer • Lineups • JOI/JDI</span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
+            {confColetivos.map((c, i) => (
+              <div key={i} className="conf-card" onClick={() => setActiveConf(activeConf === c.id ? null : c.id)}
+                style={{ background: activeConf === c.id ? `linear-gradient(135deg, ${c.cl}15, ${c.cl}08)` : "linear-gradient(135deg, #0a1628, #0d1b2a)", borderRadius: 16, padding: 20, border: `1px solid ${activeConf === c.id ? c.cl + "50" : c.cl + "20"}`, cursor: "pointer", transition: "all 0.3s" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontSize: 24 }}>{c.icon}</span>
+                    <div>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: "#fff", fontFamily: "'Sora',sans-serif" }}>{c.nm}</div>
+                      <div style={{ fontSize: 11, color: "#667788" }}>{c.sp} • {c.athletes} atletas</div>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: 9, padding: "3px 10px", borderRadius: 20, fontWeight: 700, color: stColor(c.status), background: stColor(c.status) + "15" }}>{stLabel(c.status)}</span>
+                </div>
+                <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                  {c.modules.map((m, j) => (
+                    <span key={j} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 8, background: c.cl + "15", color: c.cl, fontWeight: 600 }}>{m}</span>
+                  ))}
+                </div>
+                {activeConf === c.id && (
+                  <div style={{ marginTop: 12, padding: 12, background: "#060b1480", borderRadius: 10, border: `1px solid ${c.cl}15` }}>
+                    <div style={{ fontSize: 10, color: "#8899aa", marginBottom: 6 }}>Módulo diferencial:</div>
+                    <div style={{ fontSize: 12, color: "#fff", fontWeight: 600, marginBottom: 4 }}>Chemistry Analyzer</div>
+                    <div style={{ fontSize: 10, color: "#667788", lineHeight: 1.5 }}>JOI/JDI (Joint Offensive/Defensive Impact) • Net Rating por lineup • Melhores combinações de jogadores • Sinergia ofensiva e defensiva</div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          {/* INDIVIDUAIS */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+            <div style={{ width: 4, height: 24, borderRadius: 2, background: "#EC4899" }} />
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#EC4899", fontFamily: "'Sora',sans-serif", textTransform: "uppercase", letterSpacing: 2 }}>Camada 3B — Esportes Individuais</span>
+            <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, #EC489930, transparent)" }} />
+            <span style={{ fontSize: 11, color: "#556677" }}>Context Analyzer • Rivalry • Peak Model</span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
+            {confIndividuais.map((c, i) => (
+              <div key={i} className="conf-card" onClick={() => setActiveConf(activeConf === c.id ? null : c.id)}
+                style={{ background: activeConf === c.id ? `linear-gradient(135deg, ${c.cl}15, ${c.cl}08)` : "linear-gradient(135deg, #0a1628, #0d1b2a)", borderRadius: 16, padding: 20, border: `1px solid ${activeConf === c.id ? c.cl + "50" : c.cl + "20"}`, cursor: "pointer", transition: "all 0.3s" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontSize: 24 }}>{c.icon}</span>
+                    <div>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: "#fff", fontFamily: "'Sora',sans-serif" }}>{c.nm}</div>
+                      <div style={{ fontSize: 11, color: "#667788" }}>{c.sp} • {c.athletes} atletas</div>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: 9, padding: "3px 10px", borderRadius: 20, fontWeight: 700, color: stColor(c.status), background: stColor(c.status) + "15" }}>{stLabel(c.status)}</span>
+                </div>
+                <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                  {c.modules.map((m, j) => (
+                    <span key={j} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 8, background: c.cl + "15", color: c.cl, fontWeight: 600 }}>{m}</span>
+                  ))}
+                </div>
+                {activeConf === c.id && (
+                  <div style={{ marginTop: 12, padding: 12, background: "#060b1480", borderRadius: 10, border: `1px solid ${c.cl}15` }}>
+                    <div style={{ fontSize: 10, color: "#8899aa", marginBottom: 6 }}>Módulo diferencial: <span style={{ color: c.cl }}>{c.template}</span></div>
+                    <div style={{ fontSize: 12, color: "#fff", fontWeight: 600, marginBottom: 4 }}>Context Analyzer</div>
+                    <div style={{ fontSize: 10, color: "#667788", lineHeight: 1.5 }}>Performance sob condições variáveis • Rivalry Tracker (head-to-head) • Peak Performance Model (periodização para LA 2028)</div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* ======== FLOW → PUBLIC ======== */}
+        <div style={{ display: "flex", justifyContent: "center", padding: "8px 0", opacity: showFlow ? 1 : 0, transition: "opacity 0.6s" }}>
+          {[0,1,2,3,4].map(i => (
+            <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, margin: "0 20px" }}>
+              <div style={{ width: 1, height: 16, background: "linear-gradient(180deg, #1e3a5f40, #FFDF0040)" }} />
+              <div className="flow-dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "#FFDF00", animationDelay: `${i * 0.4}s` }} />
+            </div>
+          ))}
+        </div>
+        {/* ======== LAYER 4: PORTAL PÚBLICO ======== */}
+        <div style={{ opacity: phase >= 3 ? 1 : 0, transform: phase >= 3 ? "translateY(0)" : "translateY(30px)", transition: "all 0.8s cubic-bezier(0.4,0,0.2,1) 0.3s" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+            <div style={{ width: 4, height: 24, borderRadius: 2, background: "#FFDF00" }} />
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#FFDF00", fontFamily: "'Sora',sans-serif", textTransform: "uppercase", letterSpacing: 2 }}>Camada Pública — Time Brasil Hub</span>
+            <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, #FFDF0030, transparent)" }} />
+            <span style={{ fontSize: 11, color: "#556677" }}>Aberto a fãs, jornalistas e pesquisadores</span>
+          </div>
+          <div style={{ background: "linear-gradient(135deg, #0d1b2a, #1a1a0a)", border: "1px solid #FFDF0025", borderRadius: 20, padding: 24, position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 3, background: "linear-gradient(90deg, #009C3B, #FFDF00, #002776)", borderRadius: "0 0 20px 20px" }} />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 12 }}>
+              {[
+                { n: "Perfis de Atletas", i: "👤", d: "Bio, resultados, medalhas" },
+                { n: "Classificação", i: "🎯", d: "Vagas LA 2028 em tempo real" },
+                { n: "Calendário", i: "📅", d: "Todas as competições" },
+                { n: "Rankings", i: "📊", d: "Rankings oficiais por modalidade" },
+                { n: "Resultados Live", i: "⚡", d: "Feed em tempo real" },
+                { n: "Arquivo", i: "🏛️", d: "Desde 1920" },
+              ].map((x, i) => (
+                <div key={i} style={{ background: "#060b1480", borderRadius: 14, padding: 16, border: "1px solid #FFDF0015", textAlign: "center", cursor: "pointer", transition: "all 0.3s" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#FFDF0040"; e.currentTarget.style.background = "#FFDF0008"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "#FFDF0015"; e.currentTarget.style.background = "#060b1480"; }}>
+                  <div style={{ fontSize: 22, marginBottom: 6 }}>{x.i}</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#fff", fontFamily: "'Sora',sans-serif", marginBottom: 4 }}>{x.n}</div>
+                  <div style={{ fontSize: 9, color: "#667788" }}>{x.d}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        {/* ======== LEGEND ======== */}
+        <div style={{ marginTop: 32, display: "flex", justifyContent: "center", gap: 32, opacity: showFlow ? 1 : 0, transition: "opacity 1s" }}>
+          {[
+            { cl: "#009C3B", l: "Camada COB" },
+            { cl: "#3B82F6", l: "Core Engine" },
+            { cl: "#F97316", l: "Coletivos" },
+            { cl: "#EC4899", l: "Individuais" },
+            { cl: "#FFDF00", l: "Portal Público" },
+          ].map((x, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ width: 12, height: 12, borderRadius: 4, background: x.cl }} />
+              <span style={{ fontSize: 11, color: "#667788", fontFamily: "'Sora',sans-serif" }}>{x.l}</span>
+            </div>
+          ))}
+        </div>
+        {/* ======== STATS BAR ======== */}
+        <div style={{ marginTop: 24, display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, opacity: showFlow ? 1 : 0, transition: "opacity 1s 0.3s" }}>
+          {[
+            { l: "Confederações", v: "12/33", c: "#009C3B" },
+            { l: "Atletas", v: "583", c: "#3B82F6" },
+            { l: "Modalidades", v: "47", c: "#EC4899" },
+            { l: "Módulos ativos", v: "36", c: "#F97316" },
+            { l: "Engine", v: "1 codebase", c: "#FFDF00" },
+          ].map((x, i) => (
+            <div key={i} style={{ background: "#0a162850", borderRadius: 12, padding: "12px 16px", border: "1px solid #1e3a5f15", textAlign: "center" }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: x.c, fontFamily: "'Sora',sans-serif" }}>{x.v}</div>
+              <div style={{ fontSize: 10, color: "#556677" }}>{x.l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(SystemDiagram));
+</script>
+</body>
+</html>

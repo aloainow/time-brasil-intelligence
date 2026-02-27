@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Time Brasil Intelligence — Organograma</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<style>* { margin: 0; padding: 0; box-sizing: border-box; } body { background: #060b14; }</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+const Organogram = () => {
+  const [loaded, setLoaded] = useState(false);
+  const [hovered, setHovered] = useState(null);
+  const [expanded, setExpanded] = useState(null);
+  useEffect(() => { setTimeout(() => setLoaded(true), 300); }, []);
+  const fn = "'Sora',sans-serif";
+  // Node component
+  const Node = ({ x, y, w, h, title, sub, color, icon, id, children: kids, delay = 0, small = false, badge = null }) => (
+    <g style={{ opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(20px)", transition: `all 0.7s cubic-bezier(0.4,0,0.2,1) ${delay}s`, cursor: "pointer" }}
+      onMouseEnter={() => setHovered(id)} onMouseLeave={() => setHovered(null)} onClick={() => setExpanded(expanded === id ? null : id)}>
+      <defs>
+        <linearGradient id={`grad-${id}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#0d1b2a" />
+          <stop offset="100%" stopColor="#152238" />
+        </linearGradient>
+        <filter id={`glow-${id}`}>
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+      </defs>
+      <rect x={x} y={y} width={w} height={h} rx={small ? 10 : 14} ry={small ? 10 : 14}
+        fill={`url(#grad-${id})`}
+        stroke={hovered === id ? color : color + "40"}
+        strokeWidth={hovered === id ? 2 : 1}
+        style={{ transition: "all 0.3s" }} />
+      <rect x={x} y={y} width={w} height={small ? 2 : 3} rx={small ? 10 : 14} ry={small ? 10 : 14}
+        fill={color} opacity={0.8} />
+      {icon && <text x={x + w / 2} y={y + (small ? 22 : 28)} textAnchor="middle" fontSize={small ? 16 : 22}>{icon}</text>}
+      <text x={x + w / 2} y={y + (small ? 38 : 50)} textAnchor="middle" fontFamily={fn} fontWeight="700" fontSize={small ? 10 : 13} fill="#fff">{title}</text>
+      {sub && <text x={x + w / 2} y={y + (small ? 50 : 66)} textAnchor="middle" fontFamily={fn} fontSize={small ? 8 : 10} fill="#667788">{sub}</text>}
+      {badge && <><rect x={x + w - 50} y={y + 6} width={44} height={16} rx={8} fill={badge.cl + "25"} /><text x={x + w - 28} y={y + 17} textAnchor="middle" fontFamily={fn} fontSize={7} fontWeight="700" fill={badge.cl}>{badge.t}</text></>}
+      {kids}
+    </g>
+  );
+  // Connector line
+  const Line = ({ x1, y1, x2, y2, color = "#1e3a5f", dashed = false, delay = 0 }) => (
+    <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={color + "60"} strokeWidth={1.5}
+      strokeDasharray={dashed ? "4 4" : "none"}
+      style={{ opacity: loaded ? 1 : 0, transition: `opacity 0.6s ${delay}s` }} />
+  );
+  // Vertical connector with right angle
+  const VLine = ({ x1, y1, x2, y2, color = "#1e3a5f", delay = 0 }) => {
+    const midY = y1 + (y2 - y1) / 2;
+    return (
+      <path d={`M${x1},${y1} L${x1},${midY} L${x2},${midY} L${x2},${y2}`}
+        fill="none" stroke={color + "50"} strokeWidth={1.5}
+        style={{ opacity: loaded ? 1 : 0, transition: `opacity 0.6s ${delay}s` }} />
+    );
+  };
+  // Simple elbow connector
+  const Elbow = ({ x1, y1, x2, y2, color = "#1e3a5f", delay = 0 }) => {
+    const midY = (y1 + y2) / 2;
+    return (
+      <path d={`M${x1},${y1} C${x1},${midY} ${x2},${midY} ${x2},${y2}`}
+        fill="none" stroke={color + "40"} strokeWidth={1.2}
+        style={{ opacity: loaded ? 1 : 0, transition: `opacity 0.6s ${delay}s` }} />
+    );
+  };
+  const W = 1200, H = 1500;
+  const cx = W / 2;
+  return (
+    <div style={{ minHeight: "100vh", background: "#060b14", fontFamily: "'Segoe UI',sans-serif", display: "flex", flexDirection: "column", alignItems: "center", padding: "24px 16px" }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap');`}</style>
+      {/* Title */}
+      <div style={{ textAlign: "center", marginBottom: 24, opacity: loaded ? 1 : 0, transition: "opacity 0.6s" }}>
+        <div style={{ fontSize: 28, fontWeight: 800, color: "#fff", fontFamily: fn }}>
+          TIME BRASIL <span style={{ color: "#009C3B" }}>INTELLIGENCE</span>
+        </div>
+        <div style={{ fontSize: 13, color: "#556677", marginTop: 4 }}>Organograma do Sistema • Arquitetura Multi-Camada</div>
+      </div>
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ maxWidth: "100%" }}>
+        {/* ===== LEVEL 0: COB ===== */}
+        <Node x={cx - 140} y={20} w={280} h={80} title="COB — Comitê Olímpico" sub="Dashboard Estratégico Unificado" color="#009C3B" icon="🇧🇷" id="cob" delay={0.1} />
+        {/* Lines from COB to 6 strategic modules */}
+        {[-375, -225, -75, 75, 225, 375].map((off, i) => (
+          <Elbow key={i} x1={cx} y1={100} x2={cx + off} y2={130} color="#009C3B" delay={0.4} />
+        ))}
+        {/* ===== LEVEL 1: COB STRATEGIC MODULES ===== */}
+        {[
+          { t: "Medal Projection", s: "Projeção medalhas", i: "🏅", off: -375 },
+          { t: "Athlete 360", s: "Perfil unificado", i: "👤", off: -225 },
+          { t: "ROI Dashboard", s: "Investimento", i: "📊", off: -75 },
+          { t: "Qualification", s: "Vagas olímpicas", i: "🎯", off: 75 },
+          { t: "Talent Pipeline", s: "Funil de talentos", i: "📈", off: 225 },
+          { t: "Health Overview", s: "Saúde consolidada", i: "❤️", off: 375 },
+        ].map((m, i) => (
+          <Node key={i} x={cx + m.off - 65} y={135} w={130} h={64} title={m.t} sub={m.s} color="#009C3B" icon={m.i} id={`cob-${i}`} delay={0.5 + i * 0.05} small />
+        ))}
+        {/* Line from COB level to Core Engine */}
+        <Line x1={cx} y1={200} x2={cx} y2={240} color="#3B82F6" delay={0.8} />
+        <text x={cx} y={232} textAnchor="middle" fontFamily={fn} fontSize={9} fill="#3B82F680">▼ dados agregados</text>
+        {/* ===== LEVEL 2: CORE ENGINE ===== */}
+        <rect x={cx - 500} y={245} width={1000} height={105} rx={18} fill="#0a122580" stroke="#3B82F620" strokeWidth={1} style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.8s 0.8s" }} />
+        <text x={cx} y={268} textAnchor="middle" fontFamily={fn} fontSize={12} fontWeight="700" fill="#3B82F6" style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.8s 0.9s" }}>CORE ENGINE — Sport Analytics Framework (1 codebase → 33 configurações)</text>
+        {[
+          { t: "🌍 Radar", s: "Monitoramento Global", cl: "#3B82F6", off: -340 },
+          { t: "🧠 Report Generator", s: "Relatórios com IA", cl: "#009C3B", off: -115 },
+          { t: "🧪 Chemistry / Context", s: "Sinergia ou Condições", cl: "#F97316", off: 115 },
+          { t: "🏥 Health", s: "Saúde & Carga", cl: "#EF4444", off: 340 },
+        ].map((m, i) => (
+          <g key={i} style={{ opacity: loaded ? 1 : 0, transition: `opacity 0.6s ${1 + i * 0.1}s` }}>
+            <rect x={cx + m.off - 100} y={280} width={200} height={55} rx={10} fill="#060b1480" stroke={m.cl + "30"} strokeWidth={1} />
+            <rect x={cx + m.off - 100} y={280} width={200} height={2} rx={10} fill={m.cl} />
+            <text x={cx + m.off} y={303} textAnchor="middle" fontFamily={fn} fontSize={12} fontWeight="700" fill="#fff">{m.t}</text>
+            <text x={cx + m.off} y={322} textAnchor="middle" fontFamily={fn} fontSize={9} fill="#667788">{m.s}</text>
+          </g>
+        ))}
+        {/* ===== SPLIT: COLETIVOS / INDIVIDUAIS ===== */}
+        <Line x1={cx - 150} y1={350} x2={cx - 150} y2={385} color="#F97316" delay={1.3} />
+        <Line x1={cx + 150} y1={350} x2={cx + 150} y2={385} color="#EC4899" delay={1.3} />
+        {/* Labels */}
+        <text x={cx - 150} y={378} textAnchor="middle" fontFamily={fn} fontSize={9} fill="#F9731680">▼ config coletivo</text>
+        <text x={cx + 150} y={378} textAnchor="middle" fontFamily={fn} fontSize={9} fill="#EC489980">▼ config individual</text>
+        {/* ===== LEVEL 3A: COLETIVOS HEADER ===== */}
+        <rect x={40} y={390} width={530} height={30} rx={8} fill="#F9731610" stroke="#F9731625" strokeWidth={1}
+          style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.6s 1.4s" }} />
+        <text x={55} y={410} fontFamily={fn} fontSize={11} fontWeight="700" fill="#F97316"
+          style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.6s 1.4s" }}>ESPORTES COLETIVOS — Chemistry Analyzer</text>
+        {/* Coletivos */}
+        {[
+          { t: "CBB", s: "Basquete", i: "🏀", cl: "#F97316", st: "ATIVO", m: ["Radar", "BasketBrain", "Chemistry", "Health"] },
+          { t: "CBV", s: "Vôlei", i: "🏐", cl: "#3B82F6", st: "ATIVO", m: ["Radar", "VolleyBrain", "Chemistry", "Health"] },
+          { t: "CBHB", s: "Handebol", i: "🤾", cl: "#8B5CF6", st: "INTEGR.", m: ["Radar", "HandBrain", "Chemistry", "Health"] },
+          { t: "CBF", s: "Futebol", i: "⚽", cl: "#22C55E", st: "PLAN.", m: ["Radar", "FootBrain", "Chemistry", "Health"] },
+        ].map((c, i) => {
+          const x0 = 50 + i * 132;
+          return (
+            <g key={i} style={{ opacity: loaded ? 1 : 0, transition: `opacity 0.6s ${1.5 + i * 0.08}s` }}>
+              <Elbow x1={cx - 150} y1={390} x2={x0 + 55} y2={430} color="#F97316" delay={1.4} />
+              <rect x={x0} y={432} width={118} height={105} rx={12} fill="#0a1628" stroke={c.cl + "30"} strokeWidth={1} />
+              <rect x={x0} y={432} width={118} height={2.5} rx={12} fill={c.cl} />
+              <text x={x0 + 59} y={456} textAnchor="middle" fontSize={18}>{c.i}</text>
+              <text x={x0 + 59} y={474} textAnchor="middle" fontFamily={fn} fontSize={13} fontWeight="700" fill="#fff">{c.t}</text>
+              <text x={x0 + 59} y={488} textAnchor="middle" fontFamily={fn} fontSize={9} fill="#667788">{c.s}</text>
+              {c.m.map((mod, j) => (
+                <g key={j}>
+                  <rect x={x0 + 4 + j * 28} y={498} width={26} height={14} rx={4} fill={c.cl + "15"} />
+                  <text x={x0 + 17 + j * 28} y={509} textAnchor="middle" fontFamily={fn} fontSize={6} fill={c.cl}>{mod.substring(0, 4)}</text>
+                </g>
+              ))}
+              <rect x={x0 + 22} y={518} width={74} height={14} rx={7} fill={c.st === "ATIVO" ? "#22C55E15" : c.st === "INTEGR." ? "#FBBF2415" : "#1e3a5f15"} />
+              <text x={x0 + 59} y={529} textAnchor="middle" fontFamily={fn} fontSize={7} fontWeight="700" fill={c.st === "ATIVO" ? "#22C55E" : c.st === "INTEGR." ? "#FBBF24" : "#556677"}>{c.st}</text>
+            </g>
+          );
+        })}
+        {/* Chemistry Analyzer detail box */}
+        <rect x={50} y={548} width={510} height={48} rx={10} fill="#F9731608" stroke="#F9731620" strokeWidth={1}
+          style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.6s 1.8s" }} />
+        <text x={65} y={567} fontFamily={fn} fontSize={10} fontWeight="600" fill="#F97316" style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.6s 1.8s" }}>Chemistry Analyzer:</text>
+        <text x={65} y={584} fontFamily={fn} fontSize={9} fill="#667788" style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.6s 1.8s" }}>JOI/JDI (Joint Offensive/Defensive Impact) • Net Rating por Lineup • Melhores Combinações • 5/6/7/11-man Lineups</text>
+        {/* ===== LEVEL 3B: INDIVIDUAIS HEADER ===== */}
+        <rect x={630} y={390} width={530} height={30} rx={8} fill="#EC489910" stroke="#EC489925" strokeWidth={1}
+          style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.6s 1.4s" }} />
+        <text x={645} y={410} fontFamily={fn} fontSize={11} fontWeight="700" fill="#EC4899"
+          style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.6s 1.4s" }}>ESPORTES INDIVIDUAIS — Context Analyzer</text>
+        {/* Row 1 individuais */}
+        {[
+          { t: "CBJ", s: "Judô", i: "🥋", cl: "#EF4444", st: "ATIVO", tp: "Combate" },
+          { t: "CBAt", s: "Atletismo", i: "🏃", cl: "#FFB020", st: "ATIVO", tp: "Tempo" },
+          { t: "CBG", s: "Ginástica", i: "🤸", cl: "#EC4899", st: "ATIVO", tp: "Pontuação" },
+          { t: "CBDA", s: "Natação", i: "🏊", cl: "#06B6D4", st: "ATIVO", tp: "Tempo" },
+        ].map((c, i) => {
+          const x0 = 640 + i * 132;
+          return (
+            <g key={i} style={{ opacity: loaded ? 1 : 0, transition: `opacity 0.6s ${1.5 + i * 0.08}s` }}>
+              <Elbow x1={cx + 150} y1={390} x2={x0 + 55} y2={430} color="#EC4899" delay={1.4} />
+              <rect x={x0} y={432} width={118} height={105} rx={12} fill="#0a1628" stroke={c.cl + "30"} strokeWidth={1} />
+              <rect x={x0} y={432} width={118} height={2.5} rx={12} fill={c.cl} />
+              <text x={x0 + 59} y={456} textAnchor="middle" fontSize={18}>{c.i}</text>
+              <text x={x0 + 59} y={474} textAnchor="middle" fontFamily={fn} fontSize={13} fontWeight="700" fill="#fff">{c.t}</text>
+              <text x={x0 + 59} y={488} textAnchor="middle" fontFamily={fn} fontSize={9} fill="#667788">{c.s}</text>
+              <rect x={x0 + 20} y={496} width={78} height={14} rx={7} fill={c.cl + "15"} />
+              <text x={x0 + 59} y={507} textAnchor="middle" fontFamily={fn} fontSize={7} fontWeight="600" fill={c.cl}>{c.tp}</text>
+              <rect x={x0 + 22} y={518} width={74} height={14} rx={7} fill="#22C55E15" />
+              <text x={x0 + 59} y={529} textAnchor="middle" fontFamily={fn} fontSize={7} fontWeight="700" fill="#22C55E">{c.st}</text>
+            </g>
+          );
+        })}
+        {/* Row 2 individuais */}
+        {[
+          { t: "CBSurf", s: "Surf", i: "🏄", cl: "#10B981", st: "INTEGR.", tp: "Pontuação" },
+          { t: "CBSk", s: "Skate", i: "🛹", cl: "#F43F5E", st: "ATIVO", tp: "Pontuação" },
+          { t: "CBVela", s: "Vela", i: "⛵", cl: "#6366F1", st: "INTEGR.", tp: "Match" },
+          { t: "CBC", s: "Canoagem", i: "🛶", cl: "#F59E0B", st: "INTEGR.", tp: "Tempo" },
+        ].map((c, i) => {
+          const x0 = 640 + i * 132;
+          return (
+            <g key={i} style={{ opacity: loaded ? 1 : 0, transition: `opacity 0.6s ${1.7 + i * 0.08}s` }}>
+              <Line x1={x0 + 59} y1={537} x2={x0 + 59} y2={555} color={c.cl} delay={1.7} />
+              <rect x={x0} y={555} width={118} height={90} rx={12} fill="#0a1628" stroke={c.cl + "30"} strokeWidth={1} />
+              <rect x={x0} y={555} width={118} height={2.5} rx={12} fill={c.cl} />
+              <text x={x0 + 59} y={578} textAnchor="middle" fontSize={18}>{c.i}</text>
+              <text x={x0 + 59} y={596} textAnchor="middle" fontFamily={fn} fontSize={13} fontWeight="700" fill="#fff">{c.t}</text>
+              <text x={x0 + 59} y={610} textAnchor="middle" fontFamily={fn} fontSize={9} fill="#667788">{c.s}</text>
+              <rect x={x0 + 20} y={618} width={78} height={14} rx={7} fill={c.cl + "15"} />
+              <text x={x0 + 59} y={629} textAnchor="middle" fontFamily={fn} fontSize={7} fontWeight="600" fill={c.cl}>{c.tp}</text>
+            </g>
+          );
+        })}
+        {/* Context Analyzer detail box */}
+        <rect x={630} y={660} width={530} height={60} rx={10} fill="#EC489908" stroke="#EC489920" strokeWidth={1}
+          style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.6s 2s" }} />
+        <text x={645} y={680} fontFamily={fn} fontSize={10} fontWeight="600" fill="#EC4899" style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.6s 2s" }}>Context Analyzer (substitui Chemistry em individuais):</text>
+        <text x={645} y={696} fontFamily={fn} fontSize={9} fill="#667788" style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.6s 2s" }}>Context Analyzer (condições variáveis) • Rivalry Tracker (head-to-head) • Peak Performance Model (pico para LA 2028)</text>
+        <text x={645} y={710} fontFamily={fn} fontSize={9} fill="#667788" style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.6s 2s" }}>Templates: Tempo/Marca • Combate • Pontuação Subjetiva • Match</text>
+        {/* ===== INTEGRATION FLOW ===== */}
+        <Line x1={cx} y1={610} x2={cx} y2={750} color="#FFDF00" delay={2.2} />
+        {/* ===== LEVEL 4: PORTAL PÚBLICO ===== */}
+        <rect x={cx - 380} y={760} width={760} height={40} rx={12} fill="#FFDF0008" stroke="#FFDF0030" strokeWidth={1}
+          style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.6s 2.3s" }} />
+        <rect x={cx - 380} y={797} width={760} height={3} rx={2} fill="url(#brasil-grad)"
+          style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.6s 2.3s" }} />
+        <defs>
+          <linearGradient id="brasil-grad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#009C3B" />
+            <stop offset="50%" stopColor="#FFDF00" />
+            <stop offset="100%" stopColor="#002776" />
+          </linearGradient>
+        </defs>
+        <text x={cx} y={785} textAnchor="middle" fontFamily={fn} fontSize={14} fontWeight="700" fill="#FFDF00"
+          style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.6s 2.3s" }}>
+          PORTAL PÚBLICO — Time Brasil Hub
+        </text>
+        {/* Public modules */}
+        {[
+          { t: "Perfis", i: "👤", off: -315 },
+          { t: "Classificação", i: "🎯", off: -189 },
+          { t: "Calendário", i: "📅", off: -63 },
+          { t: "Rankings", i: "📊", off: 63 },
+          { t: "Resultados", i: "⚡", off: 189 },
+          { t: "Arquivo", i: "🏛️", off: 315 },
+        ].map((m, i) => (
+          <g key={i} style={{ opacity: loaded ? 1 : 0, transition: `opacity 0.6s ${2.4 + i * 0.06}s` }}>
+            <Elbow x1={cx} y1={800} x2={cx + m.off} y2={815} color="#FFDF00" delay={2.4} />
+            <rect x={cx + m.off - 50} y={818} width={100} height={52} rx={10} fill="#0a1628" stroke="#FFDF0020" strokeWidth={1} />
+            <text x={cx + m.off} y={840} textAnchor="middle" fontSize={16}>{m.i}</text>
+            <text x={cx + m.off} y={858} textAnchor="middle" fontFamily={fn} fontSize={9} fontWeight="600" fill="#ccd6e0">{m.t}</text>
+          </g>
+        ))}
+        {/* ===== LEGEND ===== */}
+        <rect x={40} y={900} width={1120} height={50} rx={12} fill="#0a162840" stroke="#1e3a5f15" strokeWidth={1}
+          style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.8s 2.6s" }} />
+        {[
+          { cl: "#009C3B", l: "Camada COB (Gestão)" },
+          { cl: "#3B82F6", l: "Core Engine (1 codebase)" },
+          { cl: "#F97316", l: "Coletivos (Chemistry)" },
+          { cl: "#EC4899", l: "Individuais (Context)" },
+          { cl: "#FFDF00", l: "Portal Público" },
+          { cl: "#22C55E", l: "● Ativo" },
+          { cl: "#FBBF24", l: "● Integração" },
+          { cl: "#556677", l: "● Planejado" },
+        ].map((x, i) => (
+          <g key={i} style={{ opacity: loaded ? 1 : 0, transition: `opacity 0.8s ${2.6 + i * 0.04}s` }}>
+            <rect x={55 + i * 140} y={914} width={10} height={10} rx={3} fill={x.cl} />
+            <text x={70 + i * 140} y={924} fontFamily={fn} fontSize={9} fill="#667788">{x.l}</text>
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(Organogram));
+</script>
+</body>
+</html>
