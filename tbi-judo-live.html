@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Time Brasil Intelligence — Judô ao Vivo</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<style>* { margin: 0; padding: 0; box-sizing: border-box; } body { background: #080f1a; -webkit-tap-highlight-color: transparent; }</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const PROXY = "https://judobase-proxy.vercel.app/api/judo";
+
+const App = () => {
+  const [sec, setSec] = useState("overview");
+  const [loaded, setLoaded] = useState(false);
+  const [brazilData, setBrazilData] = useState(null);
+  const [competitions, setCompetitions] = useState([]);
+  const [contests, setContests] = useState([]);
+  const [selAthlete, setSelAthlete] = useState(null);
+  const [athleteContests, setAthleteContests] = useState([]);
+  const [athleteRanking, setAthleteRanking] = useState([]);
+  const [athleteInfo, setAthleteInfo] = useState(null);
+  const [loadingContests, setLoadingContests] = useState(false);
+  const [error, setError] = useState(null);
+  const [mob, setMob] = useState(typeof window !== "undefined" && window.innerWidth < 768);
+
+  const fn = "'Outfit','Segoe UI',sans-serif";
+  const cd = { background: "linear-gradient(135deg,#0d1b2a,#152238)", borderRadius: 16, padding: 24, border: "1px solid #1e3a5f30" };
+  const ic = { background: "#0a1628", borderRadius: 12, padding: 16, border: "1px solid #1e3a5f20" };
+  const secs = [
+    {id:"overview",l:"Visão Geral",i:"◉"},
+    {id:"athletes",l:"Atletas Judô",i:"🥋"},
+    {id:"calendar",l:"Calendário 2026",i:"📅"},
+    {id:"contests",l:"Lutas & H2H",i:"⚔️"},
+  ];
+
+  const Bar = ({v,c="#009C3B",w=120}) => <div style={{width:w,height:6,background:"#1a2332",borderRadius:3,overflow:"hidden"}}><div style={{width:`${Math.min(v,100)}%`,height:"100%",background:`linear-gradient(90deg,${c},${c}CC)`,borderRadius:3,transition:"width 1s ease"}}/></div>;
+
+  // Fetch Brazil data on mount
+  useEffect(() => {
+    setTimeout(() => setLoaded(true), 100);
+    const hR = () => setMob(window.innerWidth < 768); window.addEventListener("resize", hR);
+    fetchBrazilData();
+    fetchCompetitions();
+  }, []);
+
+  const fetchBrazilData = async () => {
+    try {
+      const res = await fetch(`${PROXY}?action=country.info&id_country=49`);
+      const data = await res.json();
+      setBrazilData(data);
+    } catch (e) { setError("Erro ao carregar dados do Brasil"); }
+  };
+
+  const fetchCompetitions = async () => {
+    try {
+      const res = await fetch(`${PROXY}?action=competition.get_list&year=2026`);
+      const data = await res.json();
+      setCompetitions(data.filter(c => c.ages && c.ages.includes("sen") && c.has_results !== "0"));
+    } catch (e) { console.error(e); }
+  };
+
+  const fetchAthleteContests = async (id_person, name) => {
+    setLoadingContests(true);
+    setSelAthlete({ id: id_person, name });
+    try {
+      const [contestsRes, rankingRes, infoRes] = await Promise.all([
+        fetch(`${PROXY}?action=contest.find&id_person=${id_person}`),
+        fetch(`${PROXY}?action=competitor.wrl_current&id_person=${id_person}`),
+        fetch(`${PROXY}?action=competitor.info&id_person=${id_person}`)
+      ]);
+      const contestsData = await contestsRes.json();
+      const rankingData = await rankingRes.json();
+      const infoData = await infoRes.json();
+      setAthleteContests(contestsData.contests || []);
+      setAthleteRanking(rankingData || []);
+      setAthleteInfo(infoData);
+      setSec("contests");
+    } catch (e) { setError("Erro ao carregar lutas"); }
+    setLoadingContests(false);
+  };
+
+  // Known top Brazilian judokas with their IJF IDs
+  const topAthletes = [
+    { id: "7978", name: "SOUZA Beatriz", weight: "+78", gender: "F" },
+    { id: "2618", name: "SILVA Rafael", weight: "+100", gender: "M" },
+    { id: "2081", name: "ALTHEMAN Maria Suelen", weight: "+78", gender: "F" },
+    { id: "8025", name: "LIMA Willian", weight: "-66", gender: "M" },
+    { id: "4478", name: "BARBOSA Rafael", weight: "-90", gender: "M" },
+    { id: "5476", name: "SANTOS Daniel", weight: "-66", gender: "M" },
+  ];
+
+  const renderOverview = () => (
+    <div style={{display:"flex",flexDirection:"column",gap:24}}>
+      {/* KPIs from real data */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
+        {[
+          {l:"Ranking Mundial",v:brazilData?.ranking?.place ? `#${brazilData.ranking.place}` : "...",s:`${brazilData?.ranking?.points || "..."} pontos`,a:"#009C3B"},
+          {l:"Total Competidores",v:brazilData?.total_competitors?.toLocaleString() || "...",s:`${brazilData?.male_competitiors || "?"} M / ${brazilData?.female_competitiors || "?"} F`,a:"#3B82F6"},
+          {l:"Total de Lutas",v:brazilData?.number_of_total_fights?.toLocaleString() || "...",s:`${brazilData?.number_of_total_wins?.toLocaleString() || "?"} vitórias`,a:"#FFDF00"},
+          {l:"Win Rate",v:brazilData ? `${((brazilData.number_of_total_wins/brazilData.number_of_total_fights)*100).toFixed(1)}%` : "...",s:"Todas as competições IJF",a:"#EC4899"},
+        ].map((k,i)=>(
+          <div key={i} style={{...cd,position:"relative",overflow:"hidden",opacity:loaded?1:0,transition:`all .6s ease ${i*.1}s`}}>
+            <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${k.a},transparent)`,borderRadius:"16px 16px 0 0"}}/>
+            <div style={{fontSize:11,color:"#8899aa",textTransform:"uppercase",letterSpacing:1.5,marginBottom:8}}>{k.l}</div>
+            <div style={{fontSize:32,fontWeight:800,color:"#fff",fontFamily:fn}}>{k.v}</div>
+            <div style={{fontSize:13,color:k.a,marginTop:6,fontWeight:500}}>{k.s}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Rankings by gender */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+        <div style={cd}>
+          <h3 style={{color:"#fff",fontSize:15,fontWeight:700,margin:"0 0 16px",fontFamily:fn}}>Ranking Masculino</h3>
+          <div style={{...ic,textAlign:"center"}}>
+            <div style={{fontSize:36,fontWeight:800,color:"#3B82F6",fontFamily:fn}}>#{brazilData?.ranking_male?.place || "..."}</div>
+            <div style={{fontSize:13,color:"#8899aa"}}>Mundial</div>
+            <div style={{fontSize:16,fontWeight:700,color:"#fff",marginTop:8}}>{brazilData?.ranking_male?.points || "..."} pts</div>
+          </div>
+          <div style={{marginTop:12,...ic}}>
+            <div style={{fontSize:12,color:"#8899aa",marginBottom:8}}>Melhor Atleta</div>
+            <div style={{fontSize:15,fontWeight:700,color:"#fff"}}>{brazilData?.best_male_competitor?.competitor_name || "..."}</div>
+            <div style={{fontSize:12,color:"#3B82F6"}}>{brazilData?.best_male_competitor?.weight || ""} | {brazilData?.best_male_competitor?.max_points || ""} pts</div>
+          </div>
+        </div>
+        <div style={cd}>
+          <h3 style={{color:"#fff",fontSize:15,fontWeight:700,margin:"0 0 16px",fontFamily:fn}}>Ranking Feminino</h3>
+          <div style={{...ic,textAlign:"center"}}>
+            <div style={{fontSize:36,fontWeight:800,color:"#EC4899",fontFamily:fn}}>#{brazilData?.ranking_female?.place || "..."}</div>
+            <div style={{fontSize:13,color:"#8899aa"}}>Mundial</div>
+            <div style={{fontSize:16,fontWeight:700,color:"#fff",marginTop:8}}>{brazilData?.ranking_female?.points || "..."} pts</div>
+          </div>
+          <div style={{marginTop:12,...ic}}>
+            <div style={{fontSize:12,color:"#8899aa",marginBottom:8}}>Melhor Atleta</div>
+            <div style={{fontSize:15,fontWeight:700,color:"#fff"}}>{brazilData?.best_female_competitor?.competitor_name || "..."}</div>
+            <div style={{fontSize:12,color:"#EC4899"}}>{brazilData?.best_female_competitor?.weight || ""} | {brazilData?.best_female_competitor?.max_points || ""} pts</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Athletes quick access */}
+      <div style={cd}>
+        <h3 style={{color:"#fff",fontSize:15,fontWeight:700,margin:"0 0 16px",fontFamily:fn}}>Atletas — Clique para ver lutas e ranking</h3>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
+          {topAthletes.map((a,i) => (
+            <div key={i} onClick={() => fetchAthleteContests(a.id, a.name)}
+              style={{...ic,cursor:"pointer",transition:"all .3s",borderColor:selAthlete?.id===a.id?"#009C3B40":"#1e3a5f20"}}
+              onMouseEnter={e => e.currentTarget.style.borderColor="#009C3B40"}
+              onMouseLeave={e => e.currentTarget.style.borderColor="#1e3a5f20"}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <div style={{width:36,height:36,borderRadius:8,background:"linear-gradient(135deg,#009C3B,#002776)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:"#FFDF00"}}>{a.name.substring(0,2)}</div>
+                <div>
+                  <div style={{fontSize:13,fontWeight:700,color:"#fff"}}>{a.name}</div>
+                  <div style={{fontSize:10,color:"#667788"}}>{a.weight} | {a.gender==="M"?"Masculino":"Feminino"}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        {loadingContests && <div style={{textAlign:"center",marginTop:16,color:"#009C3B",fontSize:13}}>Carregando dados da API IJF...</div>}
+      </div>
+
+      {/* Info box */}
+      <div style={{...cd,borderColor:"#009C3B25"}}>
+        <div style={{fontSize:12,color:"#009C3B",fontWeight:700,marginBottom:8}}>📡 DADOS AO VIVO — API JUDOBASE IJF</div>
+        <div style={{fontSize:11,color:"#667788"}}>Todos os dados exibidos são consultados em tempo real da base oficial da Federação Internacional de Judô. Rankings, competições e lutas desde 2009.</div>
+      </div>
+    </div>
+  );
+
+  const renderAthletes = () => (
+    <div style={{display:"flex",flexDirection:"column",gap:20}}>
+      <div style={cd}>
+        <h3 style={{color:"#fff",fontSize:15,fontWeight:700,margin:"0 0 16px",fontFamily:fn}}>Judocas Brasileiros — Selecione para detalhes</h3>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12}}>
+          {topAthletes.map((a,i) => (
+            <div key={i} onClick={() => fetchAthleteContests(a.id, a.name)}
+              style={{...ic,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"all .3s"}}
+              onMouseEnter={e => e.currentTarget.style.borderColor="#009C3B40"}
+              onMouseLeave={e => e.currentTarget.style.borderColor="#1e3a5f20"}>
+              <div style={{display:"flex",alignItems:"center",gap:12}}>
+                <div style={{width:44,height:44,borderRadius:10,background:"linear-gradient(135deg,#009C3B,#002776)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,color:"#FFDF00"}}>{a.name.substring(0,2)}</div>
+                <div>
+                  <div style={{fontSize:14,fontWeight:700,color:"#fff"}}>{a.name}</div>
+                  <div style={{fontSize:11,color:"#667788"}}>{a.weight} | {a.gender==="M"?"Masculino":"Feminino"}</div>
+                </div>
+              </div>
+              <span style={{fontSize:11,color:"#009C3B",fontWeight:600,background:"#009C3B15",padding:"4px 12px",borderRadius:20}}>Ver lutas →</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderCalendar = () => {
+    const grandSlams = competitions.filter(c => c.rank_name === "Grand Slam");
+    const grandPrix = competitions.filter(c => c.rank_name === "Grand Prix");
+    const championships = competitions.filter(c => c.rank_name?.includes("Championship") || c.rank_name?.includes("World"));
+    const others = competitions.filter(c => !["Grand Slam","Grand Prix"].includes(c.rank_name) && !c.rank_name?.includes("Championship") && !c.rank_name?.includes("World"));
+
+    const CompCard = ({c, color}) => (
+      <div style={{...ic,borderColor:color+"20"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+          <div>
+            <div style={{fontSize:13,fontWeight:700,color:"#fff"}}>{c.name}</div>
+            <div style={{fontSize:11,color:"#667788"}}>{c.city}, {c.country}</div>
+          </div>
+          <span style={{fontSize:9,padding:"3px 8px",borderRadius:20,fontWeight:700,color,background:color+"15"}}>{c.rank_name}</span>
+        </div>
+        <div style={{fontSize:11,color:color,marginTop:8,fontWeight:600}}>{c.date_from?.replace(/\//g,"-")} → {c.date_to?.replace(/\//g,"-")}</div>
+        {c.has_results && c.has_results !== "0" && <div style={{fontSize:10,color:"#22C55E",marginTop:4}}>✓ Resultados disponíveis</div>}
+      </div>
+    );
+
+    return (
+      <div style={{display:"flex",flexDirection:"column",gap:20}}>
+        <div style={cd}>
+          <h3 style={{color:"#FFDF00",fontSize:15,fontWeight:700,margin:"0 0 16px",fontFamily:fn}}>Grand Slams 2026 ({grandSlams.length})</h3>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:10}}>
+            {grandSlams.map((c,i) => <CompCard key={i} c={c} color="#FFDF00"/>)}
+          </div>
+        </div>
+        {grandPrix.length > 0 && <div style={cd}>
+          <h3 style={{color:"#3B82F6",fontSize:15,fontWeight:700,margin:"0 0 16px",fontFamily:fn}}>Grand Prix 2026 ({grandPrix.length})</h3>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:10}}>
+            {grandPrix.map((c,i) => <CompCard key={i} c={c} color="#3B82F6"/>)}
+          </div>
+        </div>}
+        {championships.length > 0 && <div style={cd}>
+          <h3 style={{color:"#EC4899",fontSize:15,fontWeight:700,margin:"0 0 16px",fontFamily:fn}}>Campeonatos 2026 ({championships.length})</h3>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:10}}>
+            {championships.map((c,i) => <CompCard key={i} c={c} color="#EC4899"/>)}
+          </div>
+        </div>}
+      </div>
+    );
+  };
+
+  const renderContests = () => {
+    if (!selAthlete) return <div style={{...cd,textAlign:"center",padding:40}}><div style={{fontSize:14,color:"#667788"}}>Selecione um atleta na aba "Visão Geral" ou "Atletas Judô" para ver suas lutas</div></div>;
+
+    // Compute stats from contests
+    const total = athleteContests.length;
+    const wins = athleteContests.filter(c => {
+      const isBRA = (c.id_person_white === selAthlete.id && c.country_short_white === "BRA") || (c.id_person_blue === selAthlete.id && c.country_short_blue === "BRA");
+      return c.id_winner === selAthlete.id;
+    }).length;
+    const byIppon = athleteContests.filter(c => c.id_winner === selAthlete.id && c.ippon === "1").length;
+    const gsWins = athleteContests.filter(c => c.id_winner === selAthlete.id && c.gs === "1").length;
+    const recentContests = [...athleteContests].sort((a,b) => b.competition_date?.localeCompare(a.competition_date)).slice(0,20);
+
+    // Head-to-head: group by opponent
+    const h2h = {};
+    athleteContests.forEach(c => {
+      const isWhite = c.id_person_white === selAthlete.id;
+      const oppName = isWhite ? c.person_blue : c.person_white;
+      const oppCountry = isWhite ? c.country_short_blue : c.country_short_white;
+      const won = c.id_winner === selAthlete.id;
+      if (!h2h[oppName]) h2h[oppName] = { name: oppName, country: oppCountry, w: 0, l: 0 };
+      won ? h2h[oppName].w++ : h2h[oppName].l++;
+    });
+    const rivals = Object.values(h2h).filter(r => r.w + r.l >= 2).sort((a,b) => (b.w+b.l)-(a.w+a.l));
+
+    return (
+      <div style={{display:"flex",flexDirection:"column",gap:20}}>
+        {/* Athlete header */}
+        <div style={{...cd,borderColor:"#009C3B25"}}>
+          <div style={{display:"flex",alignItems:"center",gap:16}}>
+            <div style={{width:64,height:64,borderRadius:16,background:"linear-gradient(135deg,#009C3B,#002776)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:800,color:"#FFDF00",fontFamily:fn}}>{selAthlete.name.substring(0,2)}</div>
+            <div>
+              <div style={{fontSize:22,fontWeight:800,color:"#fff",fontFamily:fn}}>{athleteInfo?.given_name} {athleteInfo?.family_name || selAthlete.name}</div>
+              <div style={{fontSize:13,color:"#8899aa"}}>
+                {athleteInfo?.categories?.join(", ")} | {athleteInfo?.side === "l" ? "Canhoto" : athleteInfo?.side === "r" ? "Destro" : ""} | {athleteInfo?.height ? `${athleteInfo.height}cm` : ""}
+              </div>
+              <div style={{fontSize:12,color:"#667788",marginTop:4}}>
+                Técnica favorita: <span style={{color:"#009C3B",fontWeight:600}}>{athleteInfo?.ftechique || "—"}</span> | Treinador: <span style={{color:"#3B82F6"}}>{athleteInfo?.coach || "—"}</span>
+              </div>
+            </div>
+            {athleteRanking.length > 0 && <div style={{marginLeft:"auto",textAlign:"center"}}>
+              <div style={{fontSize:11,color:"#8899aa",textTransform:"uppercase",letterSpacing:1}}>Ranking</div>
+              <div style={{fontSize:28,fontWeight:800,color:"#FFDF00",fontFamily:fn}}>#{athleteRanking[0]?.place || "—"}</div>
+              <div style={{fontSize:11,color:"#667788"}}>{athleteRanking[0]?.points || ""} pts | {athleteRanking[0]?.weight || ""}</div>
+            </div>}
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
+          {[
+            {l:"Lutas",v:total,c:"#009C3B"}, {l:"Vitórias",v:`${wins} (${total?((wins/total)*100).toFixed(0):0}%)`,c:"#22C55E"},
+            {l:"Por Ippon",v:byIppon,c:"#FFDF00"}, {l:"Golden Score",v:gsWins,c:"#EC4899"},
+          ].map((k,i)=>(
+            <div key={i} style={{...ic,textAlign:"center"}}>
+              <div style={{fontSize:24,fontWeight:800,color:k.c,fontFamily:fn}}>{k.v}</div>
+              <div style={{fontSize:11,color:"#667788"}}>{k.l}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* H2H Rivals */}
+        {rivals.length > 0 && <div style={cd}>
+          <h3 style={{color:"#fff",fontSize:15,fontWeight:700,margin:"0 0 16px",fontFamily:fn}}>Head-to-Head — Principais Rivais</h3>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:10}}>
+            {rivals.slice(0,8).map((r,i) => (
+              <div key={i} style={{...ic,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <div>
+                  <div style={{fontSize:13,fontWeight:700,color:"#fff"}}>{r.name}</div>
+                  <div style={{fontSize:10,color:"#667788"}}>{r.country}</div>
+                </div>
+                <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                  <span style={{fontSize:14,fontWeight:800,color:"#22C55E"}}>{r.w}W</span>
+                  <span style={{fontSize:12,color:"#556677"}}>-</span>
+                  <span style={{fontSize:14,fontWeight:800,color:"#EF4444"}}>{r.l}L</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>}
+
+        {/* Recent contests */}
+        <div style={cd}>
+          <h3 style={{color:"#fff",fontSize:15,fontWeight:700,margin:"0 0 16px",fontFamily:fn}}>Últimas Lutas ({recentContests.length})</h3>
+          {recentContests.map((c,i) => {
+            const isWhite = c.id_person_white === selAthlete.id;
+            const won = c.id_winner === selAthlete.id;
+            const opp = isWhite ? c.person_blue : c.person_white;
+            const oppCountry = isWhite ? c.country_short_blue : c.country_short_white;
+            return (
+              <div key={i} style={{...ic,marginBottom:6,display:"flex",alignItems:"center",gap:12,borderColor:won?"#22C55E15":"#EF444415"}}>
+                <div style={{width:8,height:8,borderRadius:"50%",background:won?"#22C55E":"#EF4444",boxShadow:`0 0 8px ${won?"#22C55E":"#EF4444"}50`}}/>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:12,fontWeight:600,color:"#fff"}}>vs {opp} <span style={{color:"#556677"}}>({oppCountry})</span></div>
+                  <div style={{fontSize:10,color:"#667788"}}>{c.competition_name} | {c.round_name} | {c.competition_date}</div>
+                </div>
+                <div style={{textAlign:"right"}}>
+                  <span style={{fontSize:11,fontWeight:700,color:won?"#22C55E":"#EF4444"}}>{won?"VITÓRIA":"DERROTA"}</span>
+                  {c.duration && c.duration !== "00:00:00" && <div style={{fontSize:9,color:"#556677"}}>{c.duration} {c.gs==="1"?"(GS)":""}</div>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+
+  return (
+    <div style={{minHeight:"100vh",background:"#080f1a",fontFamily:"'Segoe UI',-apple-system,sans-serif",color:"#ccd6e0"}}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}*{box-sizing:border-box}.rg4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.rg3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.rg2{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:768px){.rg4,.rg3{grid-template-columns:repeat(2,1fr)}.rg2{grid-template-columns:1fr}}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:#0a1628}::-webkit-scrollbar-thumb{background:#1e3a5f;border-radius:3px}`}</style>
+      <div style={{background:"linear-gradient(90deg,#0a1628,#0d1b2a,#0a1628)",borderBottom:"1px solid #1e3a5f30",padding:mob?"0 12px":"0 32px",height:mob?56:64,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100,backdropFilter:"blur(20px)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:16}}>
+          <img src="data:image/png;base64,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" style={{height:40,objectFit:"contain"}}/>
+          <div>
+            <div style={{fontSize:16,fontWeight:800,color:"#fff",fontFamily:fn,letterSpacing:-.5}}>TIME BRASIL <span style={{color:"#009C3B"}}>INTELLIGENCE</span></div>
+            <div style={{fontSize:10,color:"#556677",letterSpacing:2,textTransform:"uppercase",display:mob?"none":"block"}}>Judô — Dados ao vivo IJF</div>
+          </div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:20}}>
+          <span style={{fontSize:12,color:"#009C3B",background:"#009C3B15",padding:"4px 12px",borderRadius:20,fontWeight:600}}>🎯 LA 2028</span>
+          <span style={{fontSize:10,color:"#22C55E",background:"#22C55E15",padding:"4px 10px",borderRadius:20}}>📡 LIVE</span>
+        </div>
+      </div>
+      <div style={{display:"flex",minHeight:"calc(100vh - 64px)"}}>
+        <div style={{width:mob?0:220,background:"#0a1628",borderRight:"1px solid #1e3a5f20",padding:mob?0:"24px 12px",display:mob?"none":"flex",flexDirection:"column",gap:4,position:"sticky",top:64,height:"calc(100vh - 64px)"}}>
+          {secs.map(s=>(
+            <button key={s.id} onClick={()=>setSec(s.id)} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderRadius:10,border:"none",background:sec===s.id?"#009C3B15":"transparent",color:sec===s.id?"#009C3B":"#667788",fontSize:13,fontWeight:sec===s.id?700:500,cursor:"pointer",textAlign:"left",width:"100%",borderLeft:sec===s.id?"3px solid #009C3B":"3px solid transparent"}}><span style={{fontSize:16,width:24,textAlign:"center"}}>{s.i}</span>{s.l}</button>
+          ))}
+          <div style={{flex:1}}/>
+          <div style={{background:"#152238",borderRadius:12,padding:16,margin:"0 4px",border:"1px solid #1e3a5f20"}}>
+            <div style={{fontSize:11,color:"#556677",marginBottom:8,fontWeight:600,textTransform:"uppercase",letterSpacing:1}}>Fonte de Dados</div>
+            <div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:4}}>Judobase IJF</div>
+            <div style={{fontSize:10,color:"#009C3B"}}>data.ijf.org</div>
+            <div style={{fontSize:9,color:"#556677",marginTop:8}}>Rankings, lutas, competições desde 2009</div>
+          </div>
+        </div>
+        <div style={{flex:1,padding:mob?16:28,overflowY:"auto",paddingBottom:mob?80:28}}>
+          <div style={{marginBottom:24}}>
+            <h1 style={{fontSize:24,fontWeight:800,color:"#fff",margin:"0 0 4px",fontFamily:fn}}>{secs.find(s=>s.id===sec)?.l}</h1>
+            <div style={{fontSize:13,color:"#556677"}}>
+              {sec==="overview"&&"Brasil no Judô mundial — Dados em tempo real da IJF"}
+              {sec==="athletes"&&"Judocas brasileiros no circuito internacional"}
+              {sec==="calendar"&&"Competições do World Judo Tour 2026"}
+              {sec==="contests"&&(selAthlete ? `Lutas e análise de ${selAthlete.name}` : "Selecione um atleta para ver lutas")}
+            </div>
+          </div>
+          {error && <div style={{background:"#EF444420",border:"1px solid #EF444440",borderRadius:12,padding:16,marginBottom:16,color:"#EF4444",fontSize:13}}>{error}</div>}
+          {!brazilData && !error && <div style={{textAlign:"center",padding:40,color:"#556677"}}>Carregando dados da IJF...</div>}
+          {brazilData && sec==="overview" && renderOverview()}
+          {sec==="athletes" && renderAthletes()}
+          {sec==="calendar" && renderCalendar()}
+          {sec==="contests" && renderContests()}
+        </div>
+        {mob&&<div style={{position:"fixed",bottom:0,left:0,right:0,background:"#0a1628",borderTop:"1px solid #1e3a5f30",display:"flex",justifyContent:"space-around",padding:"8px 0",zIndex:200}}>
+          {secs.map(s=>(
+            <button key={s.id} onClick={()=>setSec(s.id)} style={{background:"none",border:"none",color:sec===s.id?"#009C3B":"#667788",fontSize:9,fontWeight:sec===s.id?700:500,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"4px 8px"}}>
+              <span style={{fontSize:18}}>{s.i}</span>{s.l.split(" ")[0]}
+            </button>
+          ))}
+        </div>}
+      </div>
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+</script>
+</body>
+</html>
